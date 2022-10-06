@@ -141,7 +141,9 @@ create table UBUNTEAM_THE_SQL.Venta(
 	venta_total decimal(18,2) NOT NULL,
 	venta_canal nvarchar(2255) NOT NULL,
 	venta_medio_de_pago numeric(6) NOT NULL,
-	venta_envio numeric(6) NOT NULL
+	venta_envio numeric(6) NOT NULL,
+	venta_canal_costo decimal(18,2) NOT NULL,
+	venta_medio_de_pago_costo decimal(18,2) NOT NULL
 
 );
 
@@ -160,8 +162,7 @@ create table UBUNTEAM_THE_SQL.Canal(
 create table UBUNTEAM_THE_SQL.MedioDePago(
 	medio_pago_codigo numeric(6) NOT NULL,
 	medio_nombre nvarchar(255) NOT NULL,
-	medio_costo_transaccion decimal(18,2) NOT NULL,
-	medio_porcentaje decimal(18,2) NOT NULL
+	medio_costo_transaccion decimal(18,2) NOT NULL
 
 );
 
@@ -232,7 +233,16 @@ create table UBUNTEAM_THE_SQL.ProductoPorVariante(
 	prod_por_var_codigo numeric(6) NOT NULL,
 	prod_codigo nvarchar(50)  NOT NULL,
 	var_codigo nvarchar(50)NOT NULL,
-	prod_variante_precio decimal(18,0) NOT NULL
+);
+
+
+--ProductosVariante
+
+create table UBUNTEAM_THE_SQL.ProductosVariante(
+	productos_variante_codigo numeric(6) NOT NULL,
+	prod_por_var_codigo numeric(6)  NOT NULL,
+	prod_variante_precio decimal(18,0) NOT NULL,
+	prod_variante_cantidad decimal(12,2)NOT NULL
 );
 
 
@@ -240,7 +250,7 @@ create table UBUNTEAM_THE_SQL.ProductoPorVariante(
 
 create table UBUNTEAM_THE_SQL.ProductoPorVenta(
 	venta_codigo decimal(19,0) NOT NULL,
-	prod_por_var_codigo numeric NOT NULL,
+	productos_variante_codigo numeric(6) NOT NULL,
 	prod_venta_cantidad decimal(12,2) NOT NULL,
 	prod_venta_precio decimal(12,2) NOT NULL,
 
@@ -262,7 +272,7 @@ create table UBUNTEAM_THE_SQL.Compra(
 
 create table UBUNTEAM_THE_SQL.ProductoPorCompra(
 	compra_numero decimal(19,0) NOT NULL,
-	prod_por_var_codigo numeric(6)  NOT NULL,
+	productos_variante_codigo numeric(6) NOT NULL,
 	prod_compra_precio decimal(18,0) NOT NULL,
 	prod_compra_cantidad decimal(18,2) NOT NULL
 
@@ -296,7 +306,8 @@ create table UBUNTEAM_THE_SQL.DescuentoPorVenta(
 
 create table UBUNTEAM_THE_SQL.ConceptoDescuento(
 	concepto_codigo numeric(6) NOT NULL,
-	concepto_tipo nvarchar(255) NOT NULL
+	concepto_tipo nvarchar(255) NOT NULL,
+	conepto_porcentaje_descuento decimal(18,2)NOT NULL
 );
 
 
@@ -439,7 +450,7 @@ go
 		constraint PK_ProductoPorVenta primary key (venta_codigo,prod_por_var_prod_codigo,prod_por_var_var_codigo),
 		constraint FK_Producto_Por_Venta_Venta foreign key ( venta_codigo) references UBUNTEAM_THE_SQL.Venta(venta_codigo),
 	
-		constraint FK_Producto_Por_Variante_Venta foreign key ( prod_por_var_codigo) references UBUNTEAM_THE_SQL.ProductoPorVariante(prod_por_var_codigo);
+		constraint FK_Producto_Por_Variante_Venta foreign key ( productos_variante_codigo) references UBUNTEAM_THE_SQL.ProductosVariante(productos_variante_codigo);
 
 
 --Compra
@@ -457,7 +468,7 @@ go
 	add 
 		constraint PK_ProductoPorCompra primary key (compra_numero,prod_por_var_prod_codigo,prod_por_var_var_codigo),
 		constraint FK_Producto_Por_Compra_Compra foreign key ( compra_numero) references UBUNTEAM_THE_SQL.Compra(compra_numero),
-		constraint FK_Producto_Por_Variante_Compra foreign key ( prod_por_var_codigo) references UBUNTEAM_THE_SQL.ProductoPorVariante(prod_por_var_codigo);
+		constraint FK_Producto_Por_Variante_Compra foreign key ( productos_variante_codigo) references UBUNTEAM_THE_SQL.ProductosVariante(productos_variante_codigo);
 
 
 --Proveedor
