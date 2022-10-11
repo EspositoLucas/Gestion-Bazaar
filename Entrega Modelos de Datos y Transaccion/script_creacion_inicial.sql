@@ -338,6 +338,27 @@ print '**** Tablas creadas correctamente ****';
 
 go
 
+/********* Creacion de Indices *********/
+/*
+create index IX_Cliente on UBUNTEAM_THE_SQL.Cliente (clie_codigo);
+create index IX_Venta on UBUNTEAM_THE_SQL.Venta (venta_codigo);
+create index IX_Producto on UBUNTEAM_THE_SQL.Producto (prod_codigo);
+create index IX_Compra on UBUNTEAM_THE_SQL.Compra (compra_numero);
+create index IX_Proveedor on UBUNTEAM_THE_SQL.Proveedor (proveedor_cuit);
+create index IX_Variante on UBUNTEAM_THE_SQL.Variante (var_codigo);
+create index IX_Productos_Variantes on UBUNTEAM_THE_SQL.ProductosVariante (productos_variante_codigo);
+create index IX_Descuento_Compra on UBUNTEAM_THE_SQL.DescuentoPorCompra (compra_numero);
+create index IX_Descuento_Venta on UBUNTEAM_THE_SQL.DescuentoPorVenta (venta_codigo);
+create index IX_Producto_Venta on UBUNTEAM_THE_SQL.ProductoPorVenta (venta_codigo,productos_variante_codigo);
+create index IX_Producto_Compra on UBUNTEAM_THE_SQL.ProductoPorCompra (compra_numero,productos_variante_codigo);
+create index IX_Canal on UBUNTEAM_THE_SQL.Canal (canal_codigo);
+create index IX_Envio on UBUNTEAM_THE_SQL.Envio (envio_codigo);
+create index IX_Medio_De_Pago on UBUNTEAM_THE_SQL.MedioDePago (medio_pago_codigo);
+create index IX_Localidad on UBUNTEAM_THE_SQL.Localidad (loc_codigo);
+create index IX_ConceptoDescuento on UBUNTEAM_THE_SQL.ConceptoDescuento (concepto_codigo);
+
+*/
+GO
 
 /********* Creacion de Constraints/PKs *********/
 
@@ -443,11 +464,19 @@ go
 		constraint FK_Prod_Var_Variante foreign key (var_codigo) references UBUNTEAM_THE_SQL.Variante(var_codigo);
 
 
+--ProductosVariante
+
+	alter table  UBUNTEAM_THE_SQL.ProductosVariante  
+	add 
+		constraint PK_Productos_Variante primary key (productos_variante_codigo),
+		constraint FK_Prod_Por_Var foreign key ( prod_por_var_codigo) references UBUNTEAM_THE_SQL.ProductoPorVariante(prod_por_var_codigo);
+
+
 --ProductoPorVenta
 
 	alter table  UBUNTEAM_THE_SQL.ProductoPorVenta  
 	add 
-		constraint PK_ProductoPorVenta primary key (venta_codigo,prod_por_var_prod_codigo,prod_por_var_var_codigo),
+		constraint PK_ProductoPorVenta primary key (venta_codigo,productos_variante_codigo),
 		constraint FK_Producto_Por_Venta_Venta foreign key ( venta_codigo) references UBUNTEAM_THE_SQL.Venta(venta_codigo),
 	
 		constraint FK_Producto_Por_Variante_Venta foreign key ( productos_variante_codigo) references UBUNTEAM_THE_SQL.ProductosVariante(productos_variante_codigo);
@@ -466,7 +495,7 @@ go
 
 	alter table  UBUNTEAM_THE_SQL.ProductoPorCompra  
 	add 
-		constraint PK_ProductoPorCompra primary key (compra_numero,prod_por_var_prod_codigo,prod_por_var_var_codigo),
+		constraint PK_ProductoPorCompra primary key (compra_numero,productos_variante_codigo),
 		constraint FK_Producto_Por_Compra_Compra foreign key ( compra_numero) references UBUNTEAM_THE_SQL.Compra(compra_numero),
 		constraint FK_Producto_Por_Variante_Compra foreign key ( productos_variante_codigo) references UBUNTEAM_THE_SQL.ProductosVariante(productos_variante_codigo);
 
