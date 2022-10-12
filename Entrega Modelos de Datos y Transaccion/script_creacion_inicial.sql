@@ -189,7 +189,7 @@ create table UBUNTEAM_THE_SQL.MedioEnvio(
 
 create table UBUNTEAM_THE_SQL.Producto(
 	prod_codigo nvarchar(50) NOT NULL,
-	prod_descripcion nvarchar NOT NULL,
+	prod_descripcion nvarchar(50) NOT NULL,
 	prod_categoria nvarchar(255)NOT NULL,
 	prod_marca nvarchar(255) NOT NULL,
 	prod_material nvarchar(50) NOT NULL,
@@ -205,7 +205,7 @@ create table UBUNTEAM_THE_SQL.Producto(
 
 create table UBUNTEAM_THE_SQL.Categoria(
 	categoria_codigo nvarchar(50) NOT NULL,
-	var_descripcion nvarchar(50) NOT NULL
+	categoria_descripcion nvarchar(50) NOT NULL
 );
 
 
@@ -550,5 +550,62 @@ GO
 
 
 print '**** CONSTRAINTs y PKs creadas correctamente ****';
+
+go
+
+/********* Creacion de Funciones *********/
+
+--Productos
+
+create function UBUNTEAM_THE_SQL.GetCategoria (
+	@categoria_descripcion nvarchar(50)
+)
+returns int
+as
+begin
+	declare @idCategoria nvarchar = (select Categoria.categoria_codigo from UBUNTEAM_THE_SQL.Categoria  
+									 where Categoria.categoria_descripcion = @categoria_descripcion);
+	return @idCategoria;
+end
+go
+
+create function UBUNTEAM_THE_SQL.GetProducto (
+	@prod_descripcion nvarchar(50),
+	@prod_marca nvarchar(255),
+	@prod_material nvarchar(50),
+	@prod_nombre nvarchar(50)
+)
+returns int
+as
+begin
+	declare @idProducto nvarchar = (select Producto.prod_codigo from UBUNTEAM_THE_SQL.Producto  
+									where producto.prod_descripcion = @prod_descripcion 
+									and Producto.prod_marca = @prod_marca
+									and Producto.prod_material = @prod_material
+									and Producto.prod_nombre = @prod_nombre);
+	return @idProducto;
+end
+go
+
+
+
+
+print '**** Funciones creadas correctamente ****';
+
+go
+
+/********* Creacion de StoredProcedures para migracion *********/
+
+create procedure UBUNTEAM_THE_SQL.Migrar_Productos
+as
+begin
+	insert into UBUNTEAM_THE_SQL.Producto(prod_codigo,prod_descripcion,prod_categoria,prod_marca,prod_material,prod_cantidad,prod_precio,prod_total,prod_nombre)
+		select distinct  UBUNTEAM_THE_SQL.GetCategoria(M.PRODUCTO_CATEGORIA),UBUNTEAM_THE_SQL.GetProducto(M.PRODUCTO_DESCRIPCION,M.PRODUCTO_MARCA,M.PRODUCTO_MATERIAL,M.PRODUCTO_NOMBRE)
+		from gd_esquema.Maestra as M
+		where M.PRODUCTO_CATEGORIA is not null 
+end
+go
+
+print '**** SPs creados correctamente ****';
 
 go
