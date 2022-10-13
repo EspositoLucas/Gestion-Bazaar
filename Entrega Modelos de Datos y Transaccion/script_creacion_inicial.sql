@@ -170,20 +170,30 @@ create table UBUNTEAM_THE_SQL.MedioDePago(
 
 create table UBUNTEAM_THE_SQL.Envio(
 	envio_codigo numeric(6) NOT NULL,
-	envio_medio numeric(6) NOT NULL,
-	envio_localidad nvarchar(255)NOT NULL,
-	envio_precio decimal(18,2) NOT NULL,
-	 
+	envio_medio_localidad numeric(6) NOT NULL
 );
 
 --MedioEnvio
 
 create table UBUNTEAM_THE_SQL.MedioEnvio(
-	medio_envio_medio numeric(6) NOT NULL,
+	medio_envio_codigo numeric(6) NOT NULL,
 	medio_descripcion nvarchar(255)NOT NULL,
 	envio_tiempo_estimado smalldatetime NOT NULL
 	 
 );
+
+
+--MedioEnvioPorLocalidad
+
+
+create table UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad(
+	medio_envio_localidad_codigo numeric(6) NOT NULL
+	medio_envio_codigo numeric(6)  NOT NULL,
+	loc_codigo nvarchar(255)  NOT NULL,
+	medio_envio_precio decimal(18,2) NOT NULL,
+	medio_envio_tiempo_estimado smalldatetime NOT NULL
+	 
+); 
 
 --Producto
 
@@ -297,17 +307,16 @@ create table UBUNTEAM_THE_SQL.Proveedor(
 create table UBUNTEAM_THE_SQL.DescuentoPorVenta(
 	venta_codigo decimal(19,0) NOT NULL,
 	desc_venta_importe decimal(18,2)NOT NULL,
-	desc_concepto nvarchar(255) NOT NULL,
+	desc_tipo numeric(6) NOT NULL,
 
 );
 
 
 --ConceptoDescuento
 
-create table UBUNTEAM_THE_SQL.ConceptoDescuento(
-	concepto_codigo numeric(6) NOT NULL,
-	concepto_tipo nvarchar(255) NOT NULL,
-	conepto_porcentaje_descuento decimal(18,2)NOT NULL
+create table UBUNTEAM_THE_SQL.TipooDescuento(
+	tipo_descuento_codigo numeric(6) NOT NULL,
+	concepto_descripcion nvarchar(255) NOT NULL
 );
 
 
@@ -338,29 +347,9 @@ print '**** Tablas creadas correctamente ****';
 
 go
 
-/********* Creacion de Indices *********/
-/*
-create index IX_Cliente on UBUNTEAM_THE_SQL.Cliente (clie_codigo);
-create index IX_Venta on UBUNTEAM_THE_SQL.Venta (venta_codigo);
-create index IX_Producto on UBUNTEAM_THE_SQL.Producto (prod_codigo);
-create index IX_Compra on UBUNTEAM_THE_SQL.Compra (compra_numero);
-create index IX_Proveedor on UBUNTEAM_THE_SQL.Proveedor (proveedor_cuit);
-create index IX_Variante on UBUNTEAM_THE_SQL.Variante (var_codigo);
-create index IX_Productos_Variantes on UBUNTEAM_THE_SQL.ProductosVariante (productos_variante_codigo);
-create index IX_Descuento_Compra on UBUNTEAM_THE_SQL.DescuentoPorCompra (compra_numero);
-create index IX_Descuento_Venta on UBUNTEAM_THE_SQL.DescuentoPorVenta (venta_codigo);
-create index IX_Producto_Venta on UBUNTEAM_THE_SQL.ProductoPorVenta (venta_codigo,productos_variante_codigo);
-create index IX_Producto_Compra on UBUNTEAM_THE_SQL.ProductoPorCompra (compra_numero,productos_variante_codigo);
-create index IX_Canal on UBUNTEAM_THE_SQL.Canal (canal_codigo);
-create index IX_Envio on UBUNTEAM_THE_SQL.Envio (envio_codigo);
-create index IX_Medio_De_Pago on UBUNTEAM_THE_SQL.MedioDePago (medio_pago_codigo);
-create index IX_Localidad on UBUNTEAM_THE_SQL.Localidad (loc_codigo);
-create index IX_ConceptoDescuento on UBUNTEAM_THE_SQL.ConceptoDescuento (concepto_codigo);
 
-*/
-GO
 
-/********* Creacion de Constraints/PKs *********/
+/********* Creacion de Constraints/PKs/FKs *********/
 
 
 --Cliente
@@ -415,8 +404,7 @@ GO
 	alter table  UBUNTEAM_THE_SQL.Envio  
 	add 
 		constraint PK_Envio primary key (envio_codigo),
-		constraint FK_Envio_Medio foreign key ( envio_medio) references UBUNTEAM_THE_SQL.MedioEnvio(medio_envio_codigo),
-		constraint FK_Envio_Localidad foreign key ( envio_localidad) references UBUNTEAM_THE_SQL.Localidad(loc_codigo);
+		constraint FK_Envio_MedioENvioPorLocalidad foreign key ( envio_medio_localidad) references UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad(medio_envio_localidad_codigo);
 
 
 --MedioEnvio
@@ -424,6 +412,16 @@ GO
 	alter table  UBUNTEAM_THE_SQL.MedioEnvio  
 	add 
 		constraint PK_MedioEnvio primary key (medio_envio_codigo);
+
+--MedioEnvioPorLocalidad
+
+
+
+	alter table  UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad  
+	add 
+		constraint PK_MedioEnvioPorLocalidad primary key (medio_envio_por_loalidad_codigo),
+		constraint FK_Medio_Envio foreign key ( medio_envio_codigo) references UBUNTEAM_THE_SQL.MedioEnvio(medio_envio_codigo),
+		constraint FK_Medio_Envio_Localidad foreign key ( loc_codigo) references UBUNTEAM_THE_SQL.Localidad(loc_codigo);
 
 
 --Producto
@@ -513,14 +511,14 @@ GO
 	add 
 		constraint PK_Descuento_Venta primary key (venta_codigo),
 		constraint FK_Descuento_Venta foreign key (venta_codigo) references UBUNTEAM_THE_SQL.Venta(venta_codigo),
-		constraint FK_Concepto_Descuento foreign key (desc_concepto) references UBUNTEAM_THE_SQL.ConceptoDescuento(concepto_codigo);
+		constraint FK_Tipo_Descuento foreign key (desc_tipo) references UBUNTEAM_THE_SQL.TipoDescuento(tipo_descuento_codigo);
 
 
 --ConceptoDescuento
 
-	alter table  UBUNTEAM_THE_SQL.ConceptoDescuento  
+	alter table  UBUNTEAM_THE_SQL.TipoDescuento  
 	add 
-		constraint PK_Concepto_Descuento primary key (concepto_codigo);
+		constraint PK_tipo_Descuento primary key (tipo_descuento_codigo);
 
 
 --DescuentoPorCompra
@@ -594,6 +592,29 @@ print '**** Funciones creadas correctamente ****';
 
 go
 
+
+/********* Creacion de Indices *********/
+/*
+create index IX_Cliente on UBUNTEAM_THE_SQL.Cliente (clie_codigo);
+create index IX_Venta on UBUNTEAM_THE_SQL.Venta (venta_codigo);
+create index IX_Producto on UBUNTEAM_THE_SQL.Producto (prod_codigo);
+create index IX_Compra on UBUNTEAM_THE_SQL.Compra (compra_numero);
+create index IX_Proveedor on UBUNTEAM_THE_SQL.Proveedor (proveedor_cuit);
+create index IX_Variante on UBUNTEAM_THE_SQL.Variante (var_codigo);
+create index IX_Productos_Variantes on UBUNTEAM_THE_SQL.ProductosVariante (productos_variante_codigo);
+create index IX_Descuento_Compra on UBUNTEAM_THE_SQL.DescuentoPorCompra (compra_numero);
+create index IX_Descuento_Venta on UBUNTEAM_THE_SQL.DescuentoPorVenta (venta_codigo);
+create index IX_Producto_Venta on UBUNTEAM_THE_SQL.ProductoPorVenta (venta_codigo,productos_variante_codigo);
+create index IX_Producto_Compra on UBUNTEAM_THE_SQL.ProductoPorCompra (compra_numero,productos_variante_codigo);
+create index IX_Canal on UBUNTEAM_THE_SQL.Canal (canal_codigo);
+create index IX_Envio on UBUNTEAM_THE_SQL.Envio (envio_codigo);
+create index IX_Medio_De_Pago on UBUNTEAM_THE_SQL.MedioDePago (medio_pago_codigo);
+create index IX_Localidad on UBUNTEAM_THE_SQL.Localidad (loc_codigo);
+create index IX_ConceptoDescuento on UBUNTEAM_THE_SQL.ConceptoDescuento (concepto_codigo);
+
+
+GO */
+
 /********* Creacion de StoredProcedures para migracion *********/
 
 create procedure UBUNTEAM_THE_SQL.Migrar_Productos
@@ -609,3 +630,13 @@ go
 print '**** SPs creados correctamente ****';
 
 go
+
+
+
+/*select PRODUCTO_CODIGO,PRODUCTO_VARIANTE,PRODUCTO_TIPO_VARIANTE from gd_esquema.Maestra
+order by PRODUCTO_CODIGO desc
+
+select VENTA_CODIGO, VENTA_MEDIO_PAGO,VENTA_MEDIO_PAGO_COSTO, VENTA_DESCUENTO_CONCEPTO,VENTA_DESCUENTO_IMPORTE from gd_esquema.Maestra
+order by VENTA_CODIGO,VENTA_DESCUENTO_IMPORTE desc
+
+select * from gd_esquema.Maestra*/
