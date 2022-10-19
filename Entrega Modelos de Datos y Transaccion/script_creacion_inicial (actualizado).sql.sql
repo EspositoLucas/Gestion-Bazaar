@@ -40,6 +40,7 @@ DROP FUNCTION UBUNTEAM_THE_SQL.GetProducto;
 	drop constraint FK_Venta_MedioDePago ;
 	alter table  UBUNTEAM_THE_SQL.Venta
 	drop constraint FK_Venta_Envio ;
+
 --Producto
 
 	alter table  UBUNTEAM_THE_SQL.Producto  
@@ -61,18 +62,6 @@ DROP FUNCTION UBUNTEAM_THE_SQL.GetProducto;
 	drop	constraint FK_Prod_Var_Variante ;
 
 
---ProductosVariante
-
-	alter table  UBUNTEAM_THE_SQL.ProductosVariante  
-	drop constraint FK_Prod_Por_Var; 
-
---ProductoPorVenta
-
-	alter table  UBUNTEAM_THE_SQL.ProductoPorVenta  
-	drop constraint FK_Producto_Por_Venta_Venta ;
-	alter table  UBUNTEAM_THE_SQL.ProductoPorVenta  
-	drop constraint FK_Producto_Por_Variante_Venta ;
-
 
 --Compra
 
@@ -81,13 +70,6 @@ DROP FUNCTION UBUNTEAM_THE_SQL.GetProducto;
 	alter table  UBUNTEAM_THE_SQL.Compra  
 	drop constraint FK_Compra_MedioDePago ;
 
-
---ProductoPorCompra
-
-	alter table  UBUNTEAM_THE_SQL.ProductoPorCompra  
-	drop constraint FK_Producto_Por_Compra_Compra;
-	alter table  UBUNTEAM_THE_SQL.ProductoPorCompra  
-	drop	constraint FK_Producto_Por_Variante_Compra ;
 
 
 --Proveedor
@@ -226,11 +208,12 @@ create table UBUNTEAM_THE_SQL.Cliente(
 	clie_apellido nvarchar(255) NOT NULL,
 	clie_fecha_nac date NOT NULL,
 	clie_direccion nvarchar(255) NOT NULL,
-	clie_mail nvarchar(255) NOT NULL
+	clie_mail nvarchar(255) 
 	
 
 	) ;
 
+select * from gd_esquema.Maestra
 
 --Localidad 
 
@@ -245,8 +228,8 @@ create table UBUNTEAM_THE_SQL.Localidad(
 --Provincia
 
 create table UBUNTEAM_THE_SQL.Provincia(
-	prov_codigo nvarchar(255) NOT NULL,
-	prov_descripcion nvarchar(50)NOT NULL,
+	Id int identity,
+	prov_descripcion nvarchar(255)NOT NULL,
 
 );
 
@@ -255,6 +238,7 @@ create table UBUNTEAM_THE_SQL.Provincia(
 
 create table UBUNTEAM_THE_SQL.Venta(
 	venta_codigo decimal(19,0) NOT NULL,
+	prod_por_var_codigo numeric(6) NOT NULL,
 	venta_fecha date NOT NULL,
 	venta_cliente char(6) NOT NULL,
 	venta_total decimal(18,2) NOT NULL,
@@ -270,17 +254,17 @@ create table UBUNTEAM_THE_SQL.Venta(
 -- Canal
 
 create table UBUNTEAM_THE_SQL.Canal(
-	canal_codigo nvarchar(2255) NOT NULL,
+	Id int identity,
+	canal_descripcion nvarchar(2255) NOT NULL,
 	canal_costo decimal(18,2) NOT NULL,
-	canal_descripcion nvarchar(50)NOT NULL
 
 );
 
 --Medio De Pago
 
 create table UBUNTEAM_THE_SQL.MedioDePago(
-	medio_pago_codigo numeric(6) NOT NULL,
-	medio_nombre nvarchar(255) NOT NULL,
+	id int identity,
+	medio_descripcion nvarchar(255) NOT NULL,
 	medio_costo_transaccion decimal(18,2) NOT NULL
 
 );
@@ -295,9 +279,9 @@ create table UBUNTEAM_THE_SQL.Envio(
 --MedioEnvio
 
 create table UBUNTEAM_THE_SQL.MedioEnvio(
-	medio_envio_codigo numeric(6) NOT NULL,
+	Id int identity,
 	medio_descripcion nvarchar(255)NOT NULL,
-	envio_tiempo_estimado smalldatetime NOT NULL
+	envio_tiempo_estimado smalldatetime 
 	 
 );
 
@@ -314,29 +298,30 @@ create table UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad(
 	 
 ); 
 
+
+
 --Producto
 
 create table UBUNTEAM_THE_SQL.Producto(
+	Id int identity,
 	prod_codigo nvarchar(50) NOT NULL,
 	prod_descripcion nvarchar(50) NOT NULL,
-	prod_categoria nvarchar(255)NOT NULL,
+	prod_categoria int NOT NULL,
 	prod_marca nvarchar(255) NOT NULL,
 	prod_material nvarchar(50) NOT NULL,
-	prod_cantidad decimal(12,2) NOT NULL,
-	prod_precio decimal(12,2)NOT NULL,
-	prod_total decimal(12,2) NOT NULL,
 	prod_nombre nvarchar(50) NOT NULL
 
 
 );
 
+
+
 --Categoria
 
 create table UBUNTEAM_THE_SQL.Categoria(
-	categoria_codigo nvarchar(255) NOT NULL, --COMENTARIO: PUEDE SER 255 O 50
-	categoria_descripcion nvarchar(50) NOT NULL
+	Id int identity ,
+	categoria_descripcion nvarchar(255) NOT NULL
 );
-
 
 --Variante
 
@@ -351,7 +336,7 @@ create table UBUNTEAM_THE_SQL.Variante(
 --TipoVariante
 
 create table UBUNTEAM_THE_SQL.TipoVariante(
-	tipo_var_codigo nvarchar(50) NOT NULL,
+	id int identity,
 	tipo_var_descripcion nvarchar(50) NOT NULL
 );
 
@@ -362,33 +347,21 @@ create table UBUNTEAM_THE_SQL.ProductoPorVariante(
 	prod_por_var_codigo numeric(6) NOT NULL,
 	prod_codigo nvarchar(50)  NOT NULL,
 	var_codigo nvarchar(50)NOT NULL,
-);
-
-
---ProductosVariante
-
-create table UBUNTEAM_THE_SQL.ProductosVariante(
-	productos_variante_codigo numeric(6) NOT NULL,
-	prod_por_var_codigo numeric(6)  NOT NULL,
-	prod_variante_precio decimal(18,0) NOT NULL,
-	prod_variante_cantidad decimal(12,2)NOT NULL
-);
-
-
--- ProductoPorVenta
-
-create table UBUNTEAM_THE_SQL.ProductoPorVenta(
-	venta_codigo decimal(19,0) NOT NULL,
-	productos_variante_codigo numeric(6) NOT NULL,
-	prod_venta_cantidad decimal(12,2) NOT NULL,
-	prod_venta_precio decimal(12,2) NOT NULL,
+	precio_compra decimal(18,2) NOT NULL,
+	precio_venta decimal(18,2) NOT NULL,
+	prod_var_cantidad decimal(12,2) NOT NULL
 
 );
+
+
+
 
 --Compra
 
 create table UBUNTEAM_THE_SQL.Compra(
+	Id int identity ,
 	compra_numero decimal(19,0) NOT NULL,
+	prod_por_var_codigo numeric(6) NOT NULL,
 	compra_fecha date NOT NULL,
 	compra_proveedor nvarchar(50) NOT NULL,
 	compra_total decimal(18,2) NOT NULL,
@@ -396,16 +369,6 @@ create table UBUNTEAM_THE_SQL.Compra(
 
 );
 
-
---ProductoPorCompra
-
-create table UBUNTEAM_THE_SQL.ProductoPorCompra(
-	compra_numero decimal(19,0) NOT NULL,
-	productos_variante_codigo numeric(6) NOT NULL,
-	prod_compra_precio decimal(18,0) NOT NULL,
-	prod_compra_cantidad decimal(18,2) NOT NULL
-
-);
 
 
 --Proveedor
@@ -488,52 +451,54 @@ go
 		constraint PK_Tipo_Variante primary key (tipo_var_codigo);
 
 
+
 --Categoria
 
 	alter table  UBUNTEAM_THE_SQL.Categoria  
 	add 
-		constraint PK_Categoria primary key (categoria_codigo);
+		constraint PK_Categoria primary key (Id);
 
 
 --MedioEnvio
 
 	alter table  UBUNTEAM_THE_SQL.MedioEnvio  
 	add 
-		constraint PK_MedioEnvio primary key (medio_envio_codigo);
+		constraint PK_MedioEnvio primary key (Id);
 
 --Canal 
 
 	alter table  UBUNTEAM_THE_SQL.Canal  
 	add 
-		constraint PK_Canal primary key ( canal_codigo);
+		constraint PK_Canal primary key (Id);
 
 
 --MedioDePago
 
 	alter table  UBUNTEAM_THE_SQL.MedioDePago  
 	add 
-		constraint PK_MedioDePago primary key (medio_pago_codigo);
+		constraint PK_MedioDePago primary key (Id);
 
 
 --Provincia
 
 	alter table  UBUNTEAM_THE_SQL.Provincia
 	add
-		constraint PK_Provincia primary key ( prov_codigo);
+		constraint PK_Provincia primary key ( Id);
 
 
 --Localidad
 
 	alter table  UBUNTEAM_THE_SQL.Localidad  
 	add 
-		constraint PK_Localidad primary key ( loc_codigo),
+		constraint PK_Localidad primary key ( Id),
 		constraint FK_Provincia foreign key ( prov_codigo) references UBUNTEAM_THE_SQL.Provincia(prov_codigo);
 
 --Cliente
 
 	alter table  UBUNTEAM_THE_SQL.Cliente  
 	add 
-		constraint PK_Cliente primary key ( clie_codigo),
+		constraint PK_Cliente primary key ( Id),
+		constraint UC_Cliente_Codigo unique (cliente_codigo),
 	    constraint FK_Cliente_Localidad foreign key (clie_localidad) references UBUNTEAM_THE_SQL.Localidad(loc_codigo);
 
 
@@ -543,7 +508,7 @@ go
 
 	alter table  UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad  
 	add 
-		constraint PK_MedioEnvioPorLocalidad primary key (medio_envio_localidad_codigo),
+		constraint PK_MedioEnvioPorLocalidad primary key (Id),
 		constraint FK_Medio_Envio foreign key ( medio_envio_codigo) references UBUNTEAM_THE_SQL.MedioEnvio(medio_envio_codigo),
 		constraint FK_Medio_Envio_Localidad foreign key ( loc_codigo) references UBUNTEAM_THE_SQL.Localidad(loc_codigo);
 
@@ -551,37 +516,34 @@ go
 
 	alter table  UBUNTEAM_THE_SQL.Envio  
 	add 
-		constraint PK_Envio primary key (envio_codigo),
+		constraint PK_Envio primary key (id),
 		constraint FK_Envio_MedioENvioPorLocalidad foreign key ( envio_medio_localidad) references UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad(medio_envio_localidad_codigo);
 
 --Venta
 
 	alter table  UBUNTEAM_THE_SQL.Venta 
 	add 
-		constraint PK_Venta primary key ( venta_codigo),
+		constraint PK_Venta primary key ( Id),
+		constraint FK_Producto_Por_Variante_Venta foreign key (prod_por_var_codigo) references UBUNTEAM_THE_SQL.ProductoPorVariante(prod_por_var_codigo),
 		constraint FK_Venta_Cliente foreign key ( venta_cliente) references UBUNTEAM_THE_SQL.Cliente(clie_codigo),
 		constraint FK_Venta_Canal foreign key ( venta_canal) references UBUNTEAM_THE_SQL.Canal(canal_codigo),
 		constraint FK_Venta_MedioDePago foreign key ( venta_medio_de_pago) references UBUNTEAM_THE_SQL.medioDePago(medio_pago_codigo),
 		constraint FK_Venta_Envio foreign key ( venta_envio) references UBUNTEAM_THE_SQL.Envio(envio_codigo);
 
 
-
-
-
 --Producto
 
 	alter table  UBUNTEAM_THE_SQL.Producto  
 	add 
-		constraint PK_Producto primary key (prod_codigo),
-		constraint FK_Categoria foreign key ( prod_categoria) references UBUNTEAM_THE_SQL.Categoria(categoria_codigo);
-
+		constraint PK_Producto primary key (Id),
+		constraint FK_Categoria foreign key ( prod_categoria) references UBUNTEAM_THE_SQL.Categoria(Id);
 
 
 --Variante
 
 	alter table  UBUNTEAM_THE_SQL.Variante  
 	add 
-		constraint PK_Variante primary key (var_codigo),
+		constraint PK_Variante primary key (Id),
 		constraint FK_Tipo_Variante foreign key ( var_tipo) references UBUNTEAM_THE_SQL.TipoVariante(tipo_var_codigo);
 
 
@@ -589,27 +551,9 @@ go
 
 	alter table  UBUNTEAM_THE_SQL.ProductoPorVariante  
 	add 
-		constraint PK_Producto_Por_Variante primary key (prod_por_var_codigo),
+		constraint PK_Producto_Por_Variante primary key (Id),
 		constraint FK_Prod_Var_Producto foreign key ( prod_codigo) references UBUNTEAM_THE_SQL.Producto(prod_codigo),
 		constraint FK_Prod_Var_Variante foreign key (var_codigo) references UBUNTEAM_THE_SQL.Variante(var_codigo);
-
-
---ProductosVariante
-
-	alter table  UBUNTEAM_THE_SQL.ProductosVariante  
-	add 
-		constraint PK_Productos_Variante primary key (productos_variante_codigo),
-		constraint FK_Prod_Por_Var foreign key ( prod_por_var_codigo) references UBUNTEAM_THE_SQL.ProductoPorVariante(prod_por_var_codigo);
-
-
---ProductoPorVenta
-
-	alter table  UBUNTEAM_THE_SQL.ProductoPorVenta  
-	add 
-		constraint PK_ProductoPorVenta primary key (venta_codigo,productos_variante_codigo),
-		constraint FK_Producto_Por_Venta_Venta foreign key ( venta_codigo) references UBUNTEAM_THE_SQL.Venta(venta_codigo),
-	
-		constraint FK_Producto_Por_Variante_Venta foreign key ( productos_variante_codigo) references UBUNTEAM_THE_SQL.ProductosVariante(productos_variante_codigo);
 
 
 
@@ -619,24 +563,17 @@ go
 		constraint PK_Proveedor primary key (proveedor_cuit),
 		constraint FK_Proveedor_Localidad foreign key (proveedor_localidad) references UBUNTEAM_THE_SQL.Localidad(loc_codigo);
 
+
 --Compra
 
 	alter table  UBUNTEAM_THE_SQL.Compra  
 	add 
-		constraint PK_Compra primary key (compra_numero),
+		constraint PK_Compra primary key (Id),
+		constraint FK_Producto_Por_Variante_Compra foreign key (prod_por_var_codigo) references UBUNTEAM_THE_SQL.ProductoPorVariante(prod_por_var_codigo),
 		constraint FK_Proveedor foreign key ( compra_proveedor) references UBUNTEAM_THE_SQL.Proveedor(proveedor_cuit),
 		constraint FK_Compra_MedioDePago foreign key ( compra_medio_pago) references UBUNTEAM_THE_SQL.MedioDePago(medio_pago_codigo);
 
-
---ProductoPorCompra
-
-	alter table  UBUNTEAM_THE_SQL.ProductoPorCompra  
-	add 
-		constraint PK_ProductoPorCompra primary key (compra_numero,productos_variante_codigo),
-		constraint FK_Producto_Por_Compra_Compra foreign key ( compra_numero) references UBUNTEAM_THE_SQL.Compra(compra_numero),
-		constraint FK_Producto_Por_Variante_Compra foreign key ( productos_variante_codigo) references UBUNTEAM_THE_SQL.ProductosVariante(productos_variante_codigo);
-
-		
+	
 --ConceptoDescuento
 
 	alter table  UBUNTEAM_THE_SQL.TipooDescuento  
@@ -650,7 +587,6 @@ go
 		constraint PK_Descuento_Venta primary key (venta_codigo),
 		constraint FK_Descuento_Venta foreign key (venta_codigo) references UBUNTEAM_THE_SQL.Venta(venta_codigo),
 		constraint FK_Tipo_Descuento foreign key (desc_tipo) references UBUNTEAM_THE_SQL.TipooDescuento(tipo_descuento_codigo);
-
 
 
 --DescuentoPorCompra
@@ -685,19 +621,94 @@ go
 
 /********* Creacion de Funciones *********/
 
---Productos
+--GetCategoria
 
 create function UBUNTEAM_THE_SQL.GetCategoria (
-	@categoria_descripcion nvarchar(50)
+	@categoria_descripcion nvarchar(255)
 )
 returns int
 as
 begin
-	declare @idCategoria nvarchar = (select Categoria.categoria_codigo from UBUNTEAM_THE_SQL.Categoria  
+	declare @idCategoria nvarchar = (select Categoria.Id from UBUNTEAM_THE_SQL.Categoria  
 									 where Categoria.categoria_descripcion = @categoria_descripcion);
 	return @idCategoria;
 end
 go
+
+--GetTipoVariante
+
+create function UBUNTEAM_THE_SQL.GetTipoVariante (
+	@tipo_var_descripcion nvarchar(50)
+)
+returns int
+as
+begin
+	declare @idTipoVariante nvarchar = (select TipoVariante.Id from UBUNTEAM_THE_SQL.TipoVariante  
+									 where TipoVariante.tipo_var_descripcion = @tipo_var_descripcion);
+	return @idTipoVariante;
+end
+go
+
+-- GetMedioEnvio
+
+create function UBUNTEAM_THE_SQL.GetMedioEnvio (
+	@medio_envio_descripcion nvarchar(50)
+)
+returns int
+as
+begin
+	declare @idMedioEnvio nvarchar = (select MedioEnvio.Id from UBUNTEAM_THE_SQL.MedioEnvi
+									 where MedioEnvio.medio_descripcion = @medio_envio_descripcion );
+	return @idMedioEnvio;
+end
+go
+
+--GetCanal
+
+create function UBUNTEAM_THE_SQL.GetCanal (
+	@canal_descripcion nvarchar(2255)
+	@canal_costo decimal(18,2)
+)
+returns int
+as
+begin
+	declare @idCanal nvarchar = (select Canal.Id from UBUNTEAM_THE_SQL.Canal
+									 where Canal.canal_descripcion = @canal_descripcion and Canal.canal_costo = @canal_costo);
+	return @idCanal;
+end
+go
+
+
+--GetMedioDePago
+
+create function UBUNTEAM_THE_SQL.GetMedioDePago (
+	@medio_descripcion nvarchar(2255)
+	@medio_costo_transaccion decimal(18,2)
+)
+returns int
+as
+begin
+	declare @idMedioDePago nvarchar = (select MedioDePago.Id from UBUNTEAM_THE_SQL.MedioDePago
+									 where MedioDePago.medio_descripcion = @medio_descripcion and MedioDePago.medio_costo_transaccion = @medio_costo_transaccion);
+	return @idMedioDePago;
+end
+go
+
+--GetProvincia
+create function UBUNTEAM_THE_SQL.GetProvincia (
+	@prov_descripcion nvarchar(255)
+)
+returns int
+as
+begin
+	declare @idProvincia nvarchar = (select Provincia.Id from UBUNTEAM_THE_SQL.Provincia
+									 where Provincia.prov_descripcion = @prov_descripcion );
+	return @idProvincia;
+end
+go
+
+
+--GetProducto
 
 create function UBUNTEAM_THE_SQL.GetProducto (
 	@prod_descripcion nvarchar(50),
@@ -733,11 +744,9 @@ create index IX_Producto on UBUNTEAM_THE_SQL.Producto (prod_codigo);
 create index IX_Compra on UBUNTEAM_THE_SQL.Compra (compra_numero);
 create index IX_Proveedor on UBUNTEAM_THE_SQL.Proveedor (proveedor_cuit);
 create index IX_Variante on UBUNTEAM_THE_SQL.Variante (var_codigo);
-create index IX_Productos_Variantes on UBUNTEAM_THE_SQL.ProductosVariante (productos_variante_codigo);
+create index IX_Producto_Por_Variante on UBUNTEAM_THE_SQL.ProductoPorVariante (prod_var_codigo);
 create index IX_Descuento_Compra on UBUNTEAM_THE_SQL.DescuentoPorCompra (compra_numero);
 create index IX_Descuento_Venta on UBUNTEAM_THE_SQL.DescuentoPorVenta (venta_codigo);
-create index IX_Producto_Venta on UBUNTEAM_THE_SQL.ProductoPorVenta (venta_codigo,productos_variante_codigo);
-create index IX_Producto_Compra on UBUNTEAM_THE_SQL.ProductoPorCompra (compra_numero,productos_variante_codigo);
 create index IX_Canal on UBUNTEAM_THE_SQL.Canal (canal_codigo);
 create index IX_Envio on UBUNTEAM_THE_SQL.Envio (envio_codigo);
 create index IX_Medio_De_Pago on UBUNTEAM_THE_SQL.MedioDePago (medio_pago_codigo);
@@ -747,15 +756,132 @@ GO */
 
 /********* Creacion de StoredProcedures para migracion *********/
 
+--TipoVariante
+
+create procedure UBUNTEAM_THE_SQL.Migrar_TipoVariante
+as
+begin
+	insert into UBUNTEAM_THE_SQL.TipoVariante(tipo_var_descripcion)
+		select distinct M.PRODUCTO_TIPO_VARIANTE
+		from gd_esquema.Maestra as M
+		where M.PRODUCTO_TIPO_VARIANTE is not null 
+end
+go
+
+--Categoria
+
+create procedure UBUNTEAM_THE_SQL.Migrar_Categoria
+as
+begin
+	insert into UBUNTEAM_THE_SQL.Categoria(categoria_descripcion)
+		select distinct M.PRODUCTO_CATEGORIA
+		from gd_esquema.Maestra as M
+		where M.PRODUCTO_CATEGORIA is not null;
+		
+end
+go
+
+select distinct (gd_esquema.Maestra.PRODUCTO_CATEGORIA) from gd_esquema.Maestra
+
+select * from UBUNTEAM_THE_SQL.Categoria
+
+--MedioEnvio
+
+create procedure UBUNTEAM_THE_SQL.Migrar_MedioEnvio
+as
+begin
+	insert into UBUNTEAM_THE_SQL.MedioEnvio(medio_descripcion)
+	select distinct M.VENTA_MEDIO_ENVIO
+	from gd_esquema.Maestra as M
+	where M.VENTA_MEDIO_ENVIO is not null
+end
+go
+
+-- Canal
+
+create procedure UBUNTEAM_THE_SQL.Migrar_Canal
+as
+begin 
+	insert into UBUNTEAM_THE_SQL.Canal(canal_descripcion,canal_costo)
+	select distinct M.VENTA_CANAL, M.VENTA_CANAL_COSTO 
+	from gd_esquema.Maestra as M
+	where M.VENTA_CANAL is not null
+end
+go
+
+-- MedioDePago
+
+create procedure UBUNTEAM_THE_SQL.Migrar_MedioDePago
+as
+begin 
+	insert into UBUNTEAM_THE_SQL.MedioDePago(medio_descripcion,medio_costo_transaccion)
+	select distinct M.VENTA_MEDIO_PAGO, M.VENTA_MEDIO_PAGO_COSTO 
+	from gd_esquema.Maestra as M
+	where M.VENTA_MEDIO_PAGO is not null
+end
+go
+
+-- Provincia
+/*
+prov_codigo nvarchar(255) NOT NULL,
+prov_descripcion nvarchar(50)NOT NULL,
+*/
+
+create procedure UBUNTEAM_THE_SQL.Migrar_Provincias
+as
+begin 
+	insert into UBUNTEAM_THE_SQL.Provincia(prov_descripcion)
+	select distinct M.CLIENTE_PROVINCIA
+	from gd_esquema.Maestra as M
+	where M.CLIENTE_PROVINCIA is not null 
+
+	insert into UBUNTEAM_THE_SQL.Provincia(prov_descripcion)
+	select distinct M.PROVEEDOR_PROVINCIA 
+	from gd_esquema.Maestra as M
+	where M.PROVEEDOR_PROVINCIA is not null and not exists (select prov_descripcion from UBUNTEAM_THE_SQL.Provincia)
+end
+go
+
+select * from UBUNTEAM_THE_SQL.Provincia
+-- Localidad
+
+create procedure UBUNTEAM_THE_SQL.Migrar_Localidad
+as
+begin 
+	insert into UBUNTEAM_THE_SQL.MedioDePago(prov_descripcion)
+	select distinct M.CLIENTE_PROVINCIA 
+	from gd_esquema.Maestra as M
+	where M.CLIENTE_PROVINCIA is not null
+end
+go
+
+
+-- Cliente
+
+
+
+--Producto
+
 create procedure UBUNTEAM_THE_SQL.Migrar_Productos
 as
 begin
-	insert into UBUNTEAM_THE_SQL.Producto(prod_codigo,prod_descripcion,prod_categoria,prod_marca,prod_material,prod_cantidad,prod_precio,prod_total,prod_nombre)
-		select distinct  UBUNTEAM_THE_SQL.GetCategoria(M.PRODUCTO_CATEGORIA),UBUNTEAM_THE_SQL.GetProducto(M.PRODUCTO_DESCRIPCION,M.PRODUCTO_MARCA,M.PRODUCTO_MATERIAL,M.PRODUCTO_NOMBRE)
+	insert into UBUNTEAM_THE_SQL.Producto(prod_codigo,prod_descripcion,prod_categoria,prod_marca,prod_material,prod_nombre)
+		select distinct  M.PRODUCTO_CODIGO,M.PRODUCTO_DESCRIPCION,UBUNTEAM_THE_SQL.GetCategoria(M.PRODUCTO_CATEGORIA) PRODUCTO_CATEGORIA,M.PRODUCTO_MARCA,M.PRODUCTO_MATERIAL,M.PRODUCTO_NOMBRE
 		from gd_esquema.Maestra as M
-		where M.PRODUCTO_CATEGORIA is not null 
+		where M.PRODUCTO_CATEGORIA is not null and M.PRODUCTO_CODIGO is not null
+		order by M.PRODUCTO_DESCRIPCION asc
 end
 go
+
+select * from UBUNTEAM_THE_SQL.Producto
+
+select distinct(gd_esquema.Maestra.PRODUCTO_CODIGO) from gd_esquema.Maestra
+where gd_esquema.Maestra.PRODUCTO_CODIGO is not null
+order by gd_esquema.Maestra.PRODUCTO_CODIGO asc
+
+
+
+
 
 print '**** SPs creados correctamente ****';
 
