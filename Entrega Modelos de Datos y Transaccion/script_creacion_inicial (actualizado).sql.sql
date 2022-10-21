@@ -627,7 +627,7 @@ create function UBUNTEAM_THE_SQL.GetCategoria (
 returns int
 as
 begin
-	declare @idCategoria nvarchar = (select Categoria.Id from UBUNTEAM_THE_SQL.Categoria  
+	declare @idCategoria int = (select Categoria.Id from UBUNTEAM_THE_SQL.Categoria  
 									 where Categoria.categoria_descripcion = @categoria_descripcion);
 	return @idCategoria;
 end
@@ -641,7 +641,7 @@ create function UBUNTEAM_THE_SQL.GetTipoVariante (
 returns int
 as
 begin
-	declare @idTipoVariante nvarchar = (select TipoVariante.Id from UBUNTEAM_THE_SQL.TipoVariante  
+	declare @idTipoVariante int = (select TipoVariante.Id from UBUNTEAM_THE_SQL.TipoVariante  
 									 where TipoVariante.tipo_var_descripcion = @tipo_var_descripcion);
 	return @idTipoVariante;
 end
@@ -655,7 +655,7 @@ create function UBUNTEAM_THE_SQL.GetMedioEnvio (
 returns int
 as
 begin
-	declare @idMedioEnvio nvarchar = (select MedioEnvio.Id from UBUNTEAM_THE_SQL.MedioEnvio
+	declare @idMedioEnvio int = (select MedioEnvio.Id from UBUNTEAM_THE_SQL.MedioEnvio
 									 where MedioEnvio.medio_descripcion = @medio_envio_descripcion );
 	return @idMedioEnvio;
 end
@@ -670,7 +670,7 @@ create function UBUNTEAM_THE_SQL.GetCanal (
 returns int
 as
 begin
-	declare @idCanal nvarchar = (select Canal.Id from UBUNTEAM_THE_SQL.Canal
+	declare @idCanal int = (select Canal.Id from UBUNTEAM_THE_SQL.Canal
 									 where Canal.canal_descripcion = @canal_descripcion and Canal.canal_costo = @canal_costo);
 	return @idCanal;
 end
@@ -686,7 +686,7 @@ create function UBUNTEAM_THE_SQL.GetMedioDePago (
 returns int
 as
 begin
-	declare @idMedioDePago nvarchar = (select MedioDePago.Id from UBUNTEAM_THE_SQL.MedioDePago
+	declare @idMedioDePago int = (select MedioDePago.Id from UBUNTEAM_THE_SQL.MedioDePago
 									 where MedioDePago.medio_descripcion = @medio_descripcion and MedioDePago.medio_costo_transaccion = @medio_costo_transaccion);
 	return @idMedioDePago;
 end
@@ -699,12 +699,30 @@ create function UBUNTEAM_THE_SQL.GetProvincia (
 returns int
 as
 begin
-	declare @idProvincia nvarchar = (select Provincia.Id from UBUNTEAM_THE_SQL.Provincia
+	declare @idProvincia int = (select Provincia.Id from UBUNTEAM_THE_SQL.Provincia
 									 where Provincia.prov_descripcion = @prov_descripcion );
 	return @idProvincia;
 end
 go
 
+
+--GetLocalidad
+
+create function UBUNTEAM_THE_SQL.GetLocalidad (
+	@loc_descripcion nvarchar(255),
+	@id_provincia int,
+	@loc_cod_postal_codigo decimal(18,0)
+
+)
+returns int
+as
+begin
+	declare @idLocalidad int = (select Localidad.Id from UBUNTEAM_THE_SQL.Localidad
+									 where Localidad.loc_descripcion = @loc_descripcion 
+									 and Localidad.Id_provincia = @id_provincia and Localidad.loc_cod_postal_codigo = @loc_cod_postal_codigo);
+	return @idLocalidad;
+end
+go
 
 --GetProducto
 
@@ -816,6 +834,7 @@ begin
 end
 go
 
+--Provincia
 
 create procedure UBUNTEAM_THE_SQL.Migrar_Provincias
 as
@@ -854,7 +873,18 @@ go
 
 -- Cliente
 
+create procedure UBUNTEAM_THE_SQL.Migrar_Clientes
+as
+begin 
 
+	insert into UBUNTEAM_THE_SQL.Cliente(clie_nombre,clie_dni,Id_localidad,clie_telefono,clie_apellido,clie_fecha_nac,clie_direccion,clie_mail)
+	select distinct M.CLIENTE_NOMBRE,M.CLIENTE_DNI,GetLocalidad(M.CLIENTE_LOCALIDAD,M.CLIENTE_PROVINCIA,M.CLIENTE_CODIGO_POSTAL),M.CLIENTE_TELEFONO,
+					M.CLIENTE_APELLIDO,M.CLIENTE_FECHA_NAC,M.CLIENTE_DIRECCION,M.CLIENTE_MAIL
+	from gd_esquema.Maestra as M
+	where M.CLIENTE_NOMBRE is not null and  M.CLIENTE_LOCALIDAD is not null and M.CLIENTE_PROVINCIA is not null
+
+end
+go
 
 --Producto
 
