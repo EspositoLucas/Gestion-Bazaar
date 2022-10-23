@@ -399,7 +399,7 @@ create table UBUNTEAM_THE_SQL.DescuentoPorCompra(
 
 --ConceptoDescuento
 
-create table UBUNTEAM_THE_SQL.TipooDescuento(
+create table UBUNTEAM_THE_SQL.TipoDescuento(
 	Id int identity NOT NULL,
 	concepto_descripcion nvarchar(255) NOT NULL
 );
@@ -557,6 +557,7 @@ go
 	alter table  UBUNTEAM_THE_SQL.Proveedor  
 	add 
 		constraint PK_Proveedor primary key (Id),
+		constraint UC_proveedor_Cuit unique (proveedor_cuit),
 		constraint FK_Proveedor_Localidad foreign key (Id_localidad) references UBUNTEAM_THE_SQL.Localidad(Id);
 
 
@@ -573,7 +574,7 @@ go
 	
 --ConceptoDescuento
 
-	alter table  UBUNTEAM_THE_SQL.TipooDescuento  
+	alter table  UBUNTEAM_THE_SQL.TipoDescuento  
 	add 
 		constraint PK_tipo_Descuento primary key (Id);
 
@@ -784,6 +785,7 @@ begin
 end
 go
 
+
 --Categoria
 
 create procedure UBUNTEAM_THE_SQL.Migrar_Categorias
@@ -810,6 +812,8 @@ begin
 end
 go
 
+
+
 -- Canal
 
 create procedure UBUNTEAM_THE_SQL.Migrar_Canales
@@ -821,6 +825,8 @@ begin
 	where M.VENTA_CANAL is not null
 end
 go
+
+
 
 -- MedioDePago
 
@@ -854,19 +860,20 @@ go
 
 -- Localidad
 
+
 create procedure UBUNTEAM_THE_SQL.Migrar_Localidades
 as
 begin 
 
 	insert into UBUNTEAM_THE_SQL.Localidad(loc_descripcion,Id_provincia,loc_cod_postal_codigo)
+	
 	select distinct M.CLIENTE_LOCALIDAD,UBUNTEAM_THE_SQL.GetProvincia(M.CLIENTE_PROVINCIA),M.CLIENTE_CODIGO_POSTAL
 	from gd_esquema.Maestra as M
 	where M.CLIENTE_LOCALIDAD is not null and M.CLIENTE_PROVINCIA is not null
-
-	insert into UBUNTEAM_THE_SQL.Localidad(loc_descripcion,Id_provincia,loc_cod_postal_codigo)
+	union 
 	select distinct M.PROVEEDOR_LOCALIDAD,UBUNTEAM_THE_SQL.GetProvincia(M.PROVEEDOR_PROVINCIA),M.PROVEEDOR_CODIGO_POSTAL
 	from gd_esquema.Maestra as M
-	where M.PROVEEDOR_LOCALIDAD is not null and M.PROVEEDOR_PROVINCIA is not null  and not exists (select Localidad.loc_descripcion from UBUNTEAM_THE_SQL.Localidad)
+	where M.PROVEEDOR_LOCALIDAD is not null and M.PROVEEDOR_PROVINCIA is not null 
 end
 go
 
@@ -878,13 +885,14 @@ as
 begin 
 
 	insert into UBUNTEAM_THE_SQL.Cliente(clie_nombre,clie_dni,Id_localidad,clie_telefono,clie_apellido,clie_fecha_nac,clie_direccion,clie_mail)
-	select distinct M.CLIENTE_NOMBRE,M.CLIENTE_DNI,GetLocalidad(M.CLIENTE_LOCALIDAD,M.CLIENTE_PROVINCIA,M.CLIENTE_CODIGO_POSTAL),M.CLIENTE_TELEFONO,
+	select distinct M.CLIENTE_NOMBRE,M.CLIENTE_DNI,UBUNTEAM_THE_SQL.GetLocalidad(M.CLIENTE_LOCALIDAD,UBUNTEAM_THE_SQL.GetProvincia(M.CLIENTE_PROVINCIA),M.CLIENTE_CODIGO_POSTAL),M.CLIENTE_TELEFONO,
 					M.CLIENTE_APELLIDO,M.CLIENTE_FECHA_NAC,M.CLIENTE_DIRECCION,M.CLIENTE_MAIL
 	from gd_esquema.Maestra as M
 	where M.CLIENTE_NOMBRE is not null and  M.CLIENTE_LOCALIDAD is not null and M.CLIENTE_PROVINCIA is not null
 
 end
 go
+
 
 --Producto
 
@@ -898,14 +906,6 @@ begin
 		order by M.PRODUCTO_DESCRIPCION asc
 end
 go
-
-
-select * from UBUNTEAM_THE_SQL.Producto
-
-select distinct(gd_esquema.Maestra.PRODUCTO_CODIGO) from gd_esquema.Maestra
-where gd_esquema.Maestra.PRODUCTO_CODIGO is not null
-order by gd_esquema.Maestra.PRODUCTO_CODIGO asc
-
 
 
 
