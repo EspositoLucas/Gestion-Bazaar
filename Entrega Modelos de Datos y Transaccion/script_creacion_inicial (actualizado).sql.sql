@@ -198,6 +198,9 @@ GO
 
 */
 
+
+/*
+
 --Localidad
 
 	alter table  UBUNTEAM_THE_SQL.Localidad  
@@ -297,7 +300,13 @@ GO
 
 
 go
+
+*/
+
 /********* Drop de Tablas *********/
+
+/*
+
 if exists (select name from sys.tables where name = 'Canal')
 	drop table UBUNTEAM_THE_SQL.Canal;
 
@@ -364,17 +373,22 @@ if exists (select name from sys.tables where name = 'Venta')
 if exists (select name from sys.tables where name = 'VentaPorCupon')
 	drop table UBUNTEAM_THE_SQL.VentaPorCupon;
 
+*/
 
 print '**** Tablas dropeadas correctamente ****';
 
 go
 
 
+
 /********* Drop de Schema *********/
+
+/*
 if exists (select name from sys.schemas where name = 'UBUNTEAM_THE_SQL')
 	drop schema UBUNTEAM_THE_SQL;
 go
 
+*/
 
 /********* Creacion de Schema *********/
 create schema UBUNTEAM_THE_SQL;
