@@ -2,6 +2,9 @@ use GD2C2022 ;
 
 GO
 
+PRINT '**** Comenzando Migracion  ****';
+GO
+
 DECLARE @DropConstraints NVARCHAR(max) = ''
 
 SELECT @DropConstraints += 'ALTER TABLE ' + QUOTENAME(OBJECT_SCHEMA_NAME(parent_object_id)) + '.'
@@ -138,6 +141,7 @@ PRINT '**** SPs dropeados correctamente ****';
 go
 
 
+-- Version DROP de SP del sys
 /*
 DECLARE @sql VARCHAR(MAX)=''
 SELECT @sql+= 'DROP PROCEDURE' + ' UBUNTEAM_THE_SQL. ' + F.NAME + ';' FROM SYS.objects AS F where type='P'
@@ -936,7 +940,7 @@ print '**** Funciones creadas correctamente ****';
 go
 
 
-/********* Creacion de Indices *********/
+/********* Creacion de Indices *********/  -- Ver mas adelante si coviene usarlos o no
 /*
 create index IX_Cliente on UBUNTEAM_THE_SQL.Cliente (clie_codigo);
 create index IX_Venta on UBUNTEAM_THE_SQL.Venta (venta_codigo);
@@ -952,6 +956,8 @@ create index IX_Medio_De_Pago on UBUNTEAM_THE_SQL.MedioDePago (medio_pago_codigo
 create index IX_Localidad on UBUNTEAM_THE_SQL.Localidad (loc_codigo);
 create index IX_ConceptoDescuento on UBUNTEAM_THE_SQL.TipoDescuento (concepto_codigo);
 GO */
+
+
 
 /********* Creacion de StoredProcedures para migracion *********/
 
@@ -1441,8 +1447,6 @@ GO
 
 /********* TESTEO *********/
 
---select * from UBUNTEAM_THE_SQL.Envio
---select distinct M.VENTA_MEDIO_ENVIO,M.CLIENTE_LOCALIDAD,M.CLIENTE_PROVINCIA , M.CLIENTE_CODIGO_POSTAL,M.VENTA_ENVIO_PRECIO from gd_esquema.Maestra M
 */
 
 
