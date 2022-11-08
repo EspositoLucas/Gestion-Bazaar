@@ -1,15 +1,3 @@
-/*Create procedure CARGAR_PRODUCTO
-AS
-begin
-INSERT INTO PRODUCTO(codigo_producto,nombre,descripcion,codigo_material,codigo_marca,codigo_categoria)
-select distinct PRODUCTO_CODIGO,PRODUCTO_NOMBRE,PRODUCTO_DESCRIPCION,
-(Select top 1 codigo_material from MATERIAL where nombre = PRODUCTO_MATERIAL ),
-(Select top 1 codigo_marca from MARCA where nombre = PRODUCTO_MARCA ),
-(Select top 1 codigo_categoria from CATEGORIA where nombre = PRODUCTO_CATEGORIA )
- from gd_esquema.Maestra  where PRODUCTO_CODIGO is not NULL
-end
-*/
-
 
 use GD2C2022 ;
 
@@ -238,7 +226,7 @@ create table UBUNTEAM_THE_SQL.Canal(
 
 create table UBUNTEAM_THE_SQL.MedioDePago(
 	Id int identity,
-	medio_descripcion nvarchar(255) ,
+	medio_pago_descripcion nvarchar(255) ,
 	medio_costo_transaccion decimal(18,2) 
 
 );
@@ -705,7 +693,7 @@ go
 create procedure UBUNTEAM_THE_SQL.Migrar_MediosDePago
 as
 begin 
-	insert into UBUNTEAM_THE_SQL.MedioDePago(medio_descripcion,medio_costo_transaccion)
+	insert into UBUNTEAM_THE_SQL.MedioDePago(medio_pago_descripcion,medio_costo_transaccion)
 	select distinct M.VENTA_MEDIO_PAGO,M.VENTA_MEDIO_PAGO_COSTO
 	from gd_esquema.Maestra as M
 	where M.VENTA_MEDIO_PAGO is not null
@@ -779,9 +767,7 @@ begin
 					M.CLIENTE_DNI,
 	
 	(select top 1 Id from UBUNTEAM_THE_SQL.Localidad where loc_cod_postal_codigo = 	M.CLIENTE_CODIGO_POSTAL 
-														   and loc_descripcion = M.CLIENTE_LOCALIDAD  )
-	
-	,(select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.CLIENTE_PROVINCIA ),
+														   and loc_descripcion = M.CLIENTE_LOCALIDAD  and Id_provincia =  (select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.CLIENTE_PROVINCIA ) ),
 	
 					M.CLIENTE_TELEFONO,
 
@@ -801,13 +787,12 @@ create procedure UBUNTEAM_THE_SQL.Migrar_MediosDeEnvioPorLocalidad
 as
 begin 
 
-	insert into UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad(Id_localidad,Id_medio_envio)
-	select distinct (select top 1 Id from UBUNTEAM_THE_SQL.Localidad where loc_cod_postal_codigo = 	M.CLIENTE_CODIGO_POSTAL 
-														   and loc_descripcion = M.CLIENTE_LOCALIDAD  )
+	insert into UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad(Id_medio_envio,Id_localidad)
+	select distinct  (select top 1 Id from UBUNTEAM_THE_SQL.MedioEnvio where medio_descripcion = VENTA_MEDIO_ENVIO ),
 	
-	,(select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.CLIENTE_PROVINCIA ),
+	(select top 1 Id from UBUNTEAM_THE_SQL.Localidad where loc_cod_postal_codigo = 	M.CLIENTE_CODIGO_POSTAL 
+														   and loc_descripcion = M.CLIENTE_LOCALIDAD  and Id_provincia = (select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.CLIENTE_PROVINCIA ) )
 
-	 (select top 1 Id from UBUNTEAM_THE_SQL.MedioEnvio where medio_descripcion = VENTA_MEDIO_ENVIO )
 
 	from gd_esquema.Maestra as M
 
@@ -827,21 +812,20 @@ begin
 	select distinct M.VENTA_CODIGO,
 					M.VENTA_FECHA,
 		
-		(select top 1 Id from UBUNTEAM_THE_SQL.Cliente where clie_apellido = CLIENTE_APELLIDO and clie_direccion = CLIENTE_DIRECCION 
-														and clie_dni = CLIENTE_DNI and clie_fecha_nac = CLIENTE_FECHA_NAC
-														and clie_mail = CLIENTE_MAIL and clie_nombre = CLIENTE_NOMBRE
-														and clie_telefono = CLIENTE_TELEFONO 
-														and Id_localidad = (select top 1 Id from UBUNTEAM_THE_SQL.Localidad where loc_cod_postal_codigo = 	M.CLIENTE_CODIGO_POSTAL 
-														   and loc_descripcion = M.CLIENTE_LOCALIDAD  and Id_provincia =(select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.CLIENTE_PROVINCIA )  ) )
+		(select top 1 Id from UBUNTEAM_THE_SQL.Cliente where clie_nombre = M.CLIENTE_NOMBRE )
 
 
-		,M.VENTA_TOTAL,UBUNTEAM_THE_SQL.GetCanal(M.VENTA_CANAL),UBUNTEAM_THE_SQL.GetMedioDePago(M.VENTA_MEDIO_PAGO),
-												UBUNTEAM_THE_SQL.GetMedioEnvioPorLocalidad(UBUNTEAM_THE_SQL.GetMedioEnvio(M.VENTA_MEDIO_ENVIO),UBUNTEAM_THE_SQL.GetLocalidad(M.CLIENTE_LOCALIDAD,UBUNTEAM_THE_SQL.GetProvincia(M.CLIENTE_PROVINCIA),M.CLIENTE_CODIGO_POSTAL)),M.VENTA_ENVIO_PRECIO,M.VENTA_CANAL_COSTO,M.VENTA_MEDIO_PAGO_COSTO
+		,M.VENTA_TOTAL,
+						(select top 1 Id from UBUNTEAM_THE_SQL.Canal where canal_descripcion = VENTA_CANAL ), (select top 1 Id from UBUNTEAM_THE_SQL.MedioDePago where medio_pago_descripcion =M.VENTA_MEDIO_PAGO ),
+
+						(select top 1 Id from UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad  where Id_localidad = (select top 1 Id from UBUNTEAM_THE_SQL.Localidad where loc_cod_postal_codigo = 	M.CLIENTE_CODIGO_POSTAL 
+														   and loc_descripcion = M.CLIENTE_LOCALIDAD  and Id_provincia = (select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.CLIENTE_PROVINCIA ) ) and Id_medio_envio =  (select top 1 Id from UBUNTEAM_THE_SQL.MedioEnvio where medio_descripcion = VENTA_MEDIO_ENVIO ) ) ,
+						
+						M.VENTA_ENVIO_PRECIO,M.VENTA_CANAL_COSTO,M.VENTA_MEDIO_PAGO_COSTO
 	from gd_esquema.Maestra as M
 
 
-	where M.VENTA_CODIGO is not null 
-
+	where M.VENTA_CODIGO is not null  
 end
 go
 
@@ -857,13 +841,11 @@ begin
 	insert into UBUNTEAM_THE_SQL.Producto(prod_codigo,prod_descripcion,Id_categoria,prod_marca,prod_material,prod_nombre)
 		select distinct  M.PRODUCTO_CODIGO,M.PRODUCTO_DESCRIPCION,
 		
-		UBUNTEAM_THE_SQL.GetCategoria(M.PRODUCTO_CATEGORIA),
+		(select top 1 Id from UBUNTEAM_THE_SQL.Categoria where categoria_descripcion= PRODUCTO_CATEGORIA ),
 		
 		M.PRODUCTO_MARCA,
 		
 		M.PRODUCTO_MATERIAL,
-
-		(select top 1 Id from UBUNTEAM_THE_SQL.Categoria where categoria_descripcion= PRODUCTO_CATEGORIA ),
 		
 		M.PRODUCTO_NOMBRE
 
@@ -919,6 +901,8 @@ begin
 		(select top 1 Id from UBUNTEAM_THE_SQL.Compra where compra_numero = M.COMPRA_NUMERO )
 
 		from gd_esquema.Maestra M
+
+		where M.COMPRA_NUMERO is not null
 		
 end
 go
@@ -938,6 +922,8 @@ begin
 
 		from gd_esquema.Maestra M
 
+		where M.VENTA_CODIGO is not null
+
 end
 go
 
@@ -955,9 +941,7 @@ begin
 		M.PROVEEDOR_DOMICILIO,
 	
 	(select top 1 Id from UBUNTEAM_THE_SQL.Localidad where loc_cod_postal_codigo = 	M.PROVEEDOR_CODIGO_POSTAL 
-														   and loc_descripcion = M.PROVEEDOR_LOCALIDAD  )
-	
-	,(select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.PROVEEDOR_PROVINCIA ),
+														   and loc_descripcion = M.PROVEEDOR_LOCALIDAD and Id_provincia = (select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.PROVEEDOR_PROVINCIA )),
 
 		 M.PROVEEDOR_MAIL
 
@@ -971,7 +955,7 @@ go
 --Compra
 
 
-create procedure UBUNTEAM_THE_SQL.Migrar_Compras --nuevo
+create procedure UBUNTEAM_THE_SQL.Migrar_Compras 
  as
  begin 	insert into UBUNTEAM_THE_SQL.Compra(compra_numero, compra_fecha, Id_proveedor, compra_total,Id_medio_pago)
 		select distinct M.compra_numero,
@@ -984,11 +968,11 @@ create procedure UBUNTEAM_THE_SQL.Migrar_Compras --nuevo
 						
 						M.COMPRA_TOTAL,
 
-						(select top 1 Id from UBUNTEAM_THE_SQL.MedioDePago where medio_descripcion = M.VENTA_MEDIO_PAGO )
+						(select top 1 Id from UBUNTEAM_THE_SQL.MedioDePago where medio_pago_descripcion = M.VENTA_MEDIO_PAGO  )
 
 		from gd_esquema.Maestra M
 
- 		where M.COMPRA_NUMERO is not null
+ 		where M.COMPRA_NUMERO is not null 
 end
 go 
 
@@ -1041,7 +1025,7 @@ create procedure UBUNTEAM_THE_SQL.Migrar_DescuentoPorVenta
 
 		from gd_esquema.Maestra M
 
- 		where M.VENTA_DESCUENTO_IMPORTE is not null
+ 		where M.VENTA_DESCUENTO_IMPORTE is not null 
 
 end
 go 
@@ -1078,6 +1062,7 @@ begin
 		M.VENTA_CUPON_IMPORTE
 
 		from gd_esquema.Maestra M 
+
 
 end
 go
@@ -1201,7 +1186,7 @@ BEGIN
 END
 
 
-
+/*
 
 /********* TESTEO *********/
 
