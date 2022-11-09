@@ -162,7 +162,7 @@ go
 --Cliente
 
 create table UBUNTEAM_THE_SQL.Cliente(
-	Id int identity NOT NULL ,
+	Id int identity  ,
 	clie_nombre nvarchar(255) NOT NULL,
 	clie_dni decimal(18,0) NOT NULL,
 	Id_localidad int NOT NULL,
@@ -179,7 +179,7 @@ create table UBUNTEAM_THE_SQL.Cliente(
 --Localidad 
 
 create table UBUNTEAM_THE_SQL.Localidad(
-	Id int identity NOT NULL,
+	Id int identity ,
 	loc_descripcion nvarchar(255) NOT NULL,
 	Id_provincia int NOT NULL,
 	loc_cod_postal_codigo decimal(18, 0) NOT NULL
@@ -198,7 +198,7 @@ create table UBUNTEAM_THE_SQL.Provincia(
 -- Venta
 
 create table UBUNTEAM_THE_SQL.Venta(
-	Id int identity NOT NULL,	
+	Id int identity ,	
 	venta_codigo decimal(19,0) NOT NULL,
 	venta_fecha date ,
 	Id_cliente int NOT NULL,
@@ -245,7 +245,7 @@ create table UBUNTEAM_THE_SQL.MedioEnvio(
 
 
 create table UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad(
-	Id int identity NOT NULL,
+	Id int identity ,
 	Id_medio_envio int  NOT NULL,
 	Id_localidad int  NOT NULL,
 	medio_envio_precio decimal(18,2),
@@ -360,7 +360,7 @@ create table UBUNTEAM_THE_SQL.DescuentoPorCompra(
 --TipoDescuento
 
 create table UBUNTEAM_THE_SQL.TipoDescuento(
-	Id int identity NOT NULL,
+	Id int identity ,
 	concepto_descripcion nvarchar(255) 
 );
 
@@ -368,7 +368,7 @@ create table UBUNTEAM_THE_SQL.TipoDescuento(
 --Cupon
 
 create table UBUNTEAM_THE_SQL.Cupon(
-	Id int identity NOT NULL,
+	Id int identity ,
 	cupon_codigo nvarchar(255) NOT NULL,
 	cupon_valor decimal(18,2) ,
 	cupon_fecha_desde date ,
@@ -788,13 +788,15 @@ as
 begin 
 
 	insert into UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad(Id_medio_envio,Id_localidad)
-	select distinct  (select top 1 Id from UBUNTEAM_THE_SQL.MedioEnvio where medio_descripcion = VENTA_MEDIO_ENVIO ),
+	select distinct  (select top 1 Id from UBUNTEAM_THE_SQL.MedioEnvio where medio_descripcion = M.VENTA_MEDIO_ENVIO ),
 	
 	(select top 1 Id from UBUNTEAM_THE_SQL.Localidad where loc_cod_postal_codigo = 	M.CLIENTE_CODIGO_POSTAL 
 														   and loc_descripcion = M.CLIENTE_LOCALIDAD  and Id_provincia = (select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.CLIENTE_PROVINCIA ) )
 
 
 	from gd_esquema.Maestra as M
+
+	where M.VENTA_MEDIO_ENVIO is not null
 
 end
 go
@@ -918,12 +920,12 @@ begin
 		
 		and variante_codigo = M.PRODUCTO_VARIANTE_CODIGO ), 
 
-		(select top 1 Id from UBUNTEAM_THE_SQL.Venta where venta_codigo = VENTA_CODIGO)
+		(select top 1 Id from UBUNTEAM_THE_SQL.Venta where venta_codigo = VENTA_CODIGO )
 
 		from gd_esquema.Maestra M
 
-		where M.VENTA_CODIGO is not null
-
+		where M.VENTA_CODIGO is not null and M.PRODUCTO_CODIGO is not null and M.PRODUCTO_VARIANTE_CODIGO is not null
+		 
 end
 go
 
@@ -968,11 +970,11 @@ create procedure UBUNTEAM_THE_SQL.Migrar_Compras
 						
 						M.COMPRA_TOTAL,
 
-						(select top 1 Id from UBUNTEAM_THE_SQL.MedioDePago where medio_pago_descripcion = M.VENTA_MEDIO_PAGO  )
+						(select top 1 Id from UBUNTEAM_THE_SQL.MedioDePago where medio_pago_descripcion = M.VENTA_MEDIO_PAGO  and medio_costo_transaccion = M.VENTA_MEDIO_PAGO_COSTO )
 
 		from gd_esquema.Maestra M
 
- 		where M.COMPRA_NUMERO is not null 
+ 		where M.COMPRA_NUMERO is not null and M.VENTA_MEDIO_PAGO is not null
 end
 go 
 
@@ -1005,7 +1007,7 @@ create procedure UBUNTEAM_THE_SQL.Migrar_DescuentoPorCompra
 
 		from gd_esquema.Maestra M
 
- 		where M.DESCUENTO_COMPRA_CODIGO is not null
+ 		where M.DESCUENTO_COMPRA_CODIGO is not null and M.COMPRA_NUMERO is not null
 end
 go 
 
@@ -1063,7 +1065,7 @@ begin
 
 		from gd_esquema.Maestra M 
 
-
+		where M.VENTA_CUPON_CODIGO is not null
 end
 go
 
@@ -1173,7 +1175,7 @@ IF (
 	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.TipoDescuento)
 	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.TipoVariante)
 	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.VentaPorCupon)
-	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.ProductoPorVariante PV)
+	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.ProductoPorVariante)
 	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Provincia)
 	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Localidad)
 
