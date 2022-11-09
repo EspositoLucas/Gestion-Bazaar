@@ -904,7 +904,7 @@ begin
 
 		from gd_esquema.Maestra M
 
-		where M.COMPRA_NUMERO is not null
+		where M.COMPRA_NUMERO is not null and M.PRODUCTO_CODIGO is not null and M.PRODUCTO_VARIANTE_CODIGO is not null
 		
 end
 go
@@ -970,11 +970,11 @@ create procedure UBUNTEAM_THE_SQL.Migrar_Compras
 						
 						M.COMPRA_TOTAL,
 
-						(select top 1 Id from UBUNTEAM_THE_SQL.MedioDePago where medio_pago_descripcion = M.VENTA_MEDIO_PAGO  and medio_costo_transaccion = M.VENTA_MEDIO_PAGO_COSTO )
+						(select top 1 Id from UBUNTEAM_THE_SQL.MedioDePago where medio_pago_descripcion = M.COMPRA_MEDIO_PAGO  )
 
 		from gd_esquema.Maestra M
 
- 		where M.COMPRA_NUMERO is not null and M.VENTA_MEDIO_PAGO is not null
+ 		where M.COMPRA_NUMERO is not null and M.COMPRA_MEDIO_PAGO is not null
 end
 go 
 
@@ -1182,10 +1182,9 @@ IF (
 	
 )
 
-BEGIN
-	COMMIT TRANSACTION;
+
 	PRINT 'Tablas migradas correctamente.';
-END
+
 
 
 /*
