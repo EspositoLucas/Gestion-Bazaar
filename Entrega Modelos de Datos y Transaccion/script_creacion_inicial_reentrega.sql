@@ -75,9 +75,6 @@ IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_MediosDeEnvioPor
 	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_MediosDeEnvioPorLocalidad;
 go
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Envios')
-	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Envios;
-go
 
 IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Ventas')
 	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Ventas;
@@ -297,7 +294,7 @@ create table UBUNTEAM_THE_SQL.TipoVariante(
 );
 
 
---ProductoPorVariante -- sin Id
+--ProductoPorVariante
 
 create table UBUNTEAM_THE_SQL.ProductoPorVariante(
 	Id int identity ,
@@ -546,7 +543,7 @@ go
 		constraint FK_Compra_MedioDePago foreign key ( Id_medio_pago) references UBUNTEAM_THE_SQL.MedioDePago(Id);
 
 	
---ConceptoDescuento
+--TipoDescuento
 
 	alter table  UBUNTEAM_THE_SQL.TipoDescuento  
 	add 
