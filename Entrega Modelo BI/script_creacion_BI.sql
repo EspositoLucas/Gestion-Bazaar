@@ -3,7 +3,7 @@ use GD2C2022 ;
 
 GO
 
-PRINT '**** Comenzando Migracion  ****';
+PRINT '**** Comenzando carga BI  ****';
 GO
 
 DECLARE @DropConstraints NVARCHAR(max) = ''
@@ -39,56 +39,56 @@ GO
 
 
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Categorias')
-	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Categorias;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_Categorias')
+	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Dimension_Categorias;
 go
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_MediosDeEnvio')
-	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_MediosDeEnvio;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_MediosDeEnvio')
+	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Dimension_MediosDeEnvio;
 go
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Canales')
-	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Canales;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_Canales')
+	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Dimension_Canales;
 go
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_MediosDePago')
-	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_MediosDePago;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_MediosDePago')
+	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Dimension_MediosDePago;
 go
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Provincias')
-	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Provincias;
-go
-
-
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Clientes')
-	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Clientes;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_Provincias')
+	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Dimension_Provincias;
 go
 
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_MediosDeEnvioPorLocalidad')
-	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_MediosDeEnvioPorLocalidad;
-go
-
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Ventas')
-	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Ventas;
-go
-
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Productos')
-	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Productos;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_Clientes')
+	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Dimension_Clientes;
 go
 
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Proveedores')
-	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Proveedores;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_MediosDeEnvioPorLocalidad')
+	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Dimension_MediosDeEnvioPorLocalidad;
 go
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Compras')
-	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Compras;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Hechos_Ventas')
+	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Hechos_Ventas;
+go
+
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_Productos')
+	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Dimension_Productos;
 go
 
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_TiposDeDescuento')
-	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_TiposDeDescuento;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_Proveedores')
+	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Dimension_Proveedores;
+go
+
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Hechos_Compras')
+	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Hechos_Compras;
+go
+
+
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_TiposDeDescuento')
+	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Dimension_TiposDeDescuento;
 go
 
 
@@ -125,7 +125,7 @@ go
 
 --Cliente
 
-create table UBUNTEAM_THE_SQL.Cliente(
+create table UBUNTEAM_THE_SQL.Dimension_Cliente(
 	Id int identity  ,
 	clie_nombre nvarchar(255) NOT NULL,
 	clie_dni decimal(18,0) NOT NULL,
@@ -134,7 +134,8 @@ create table UBUNTEAM_THE_SQL.Cliente(
 	clie_apellido nvarchar(255) ,
 	clie_fecha_nac date ,
 	clie_direccion nvarchar(255) ,
-	clie_mail nvarchar(255) 
+	clie_mail nvarchar(255),
+	clie_edad int 
 	
 
 	) ;
@@ -143,7 +144,7 @@ create table UBUNTEAM_THE_SQL.Cliente(
 
 --Provincia
 
-create table UBUNTEAM_THE_SQL.Provincia(
+create table UBUNTEAM_THE_SQL.Dimension_Provincia(
 	Id int identity,
 	prov_descripcion nvarchar(255),
 
@@ -152,7 +153,7 @@ create table UBUNTEAM_THE_SQL.Provincia(
 
 --MedioEnvioPorProvincia
 
-
+/*
 create table UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad(
 	Id int identity ,
 	Id_medio_envio int  NOT NULL,
@@ -162,27 +163,34 @@ create table UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad(
 	 
 ); 
 
+*/
 -- Venta
 
-create table UBUNTEAM_THE_SQL.Venta(
-	Id int identity ,	
-	venta_codigo decimal(19,0) NOT NULL,
-	venta_fecha date ,
+create table UBUNTEAM_THE_SQL.Hechos_Ventas(
+	Id int identity ,
 	Id_cliente int NOT NULL,
-	venta_total decimal(18,2) ,
 	Id_canal int NOT NULL,
 	Id_medio_de_pago int NOT NULL,
-	Id_medio_envio_por_localidad int NOT NULL,
+	Id_medio_envio int NOT NULL,
+	id_tiempo int NOT NULL,
+	id_producto int NOT NULL,
+	id_tipo_descuento int NOT NULL,
+	venta_codigo decimal(19,0) NOT NULL,
+	venta_fecha date ,
+	venta_total decimal(18,2) ,
 	venta_envio_precio decimal(18,2),
 	venta_canal_costo decimal(18,2) ,
-	venta_medio_de_pago_costo decimal(18,2) 
+	venta_medio_de_pago_costo decimal(18,2),
+	venta_producto_precio decimal(18,2,
+	venta_producto_cantidad decimal(12,2)
+	 
 
 );
 
 
 -- Canal
 
-create table UBUNTEAM_THE_SQL.Canal(
+create table UBUNTEAM_THE_SQL.Dimension_Canal(
 	Id int identity,
 	canal_descripcion nvarchar(2255) ,
 	canal_costo decimal(18,2) ,
@@ -191,7 +199,7 @@ create table UBUNTEAM_THE_SQL.Canal(
 
 --Medio De Pago
 
-create table UBUNTEAM_THE_SQL.MedioDePago(
+create table UBUNTEAM_THE_SQL.Dimension_MedioDePago(
 	Id int identity,
 	medio_pago_descripcion nvarchar(255) ,
 	medio_costo_transaccion decimal(18,2) 
@@ -201,7 +209,7 @@ create table UBUNTEAM_THE_SQL.MedioDePago(
 
 --MedioEnvio
 
-create table UBUNTEAM_THE_SQL.MedioEnvio(
+create table UBUNTEAM_THE_SQL.Dimension_MedioEnvio(
 	Id int identity,
 	medio_descripcion nvarchar(255)
 	 
@@ -211,7 +219,7 @@ create table UBUNTEAM_THE_SQL.MedioEnvio(
 
 --Producto
 
-create table UBUNTEAM_THE_SQL.Producto(
+create table UBUNTEAM_THE_SQL.Dimension_Producto(
 	Id int identity,
 	prod_codigo nvarchar(50) NOT NULL,
 	prod_descripcion nvarchar(50) ,
@@ -227,7 +235,7 @@ create table UBUNTEAM_THE_SQL.Producto(
 
 --Categoria
 
-create table UBUNTEAM_THE_SQL.Categoria(
+create table UBUNTEAM_THE_SQL.Dimension_Categoria(
 	Id int identity ,
 	categoria_descripcion nvarchar(255) 
 );
@@ -237,20 +245,25 @@ create table UBUNTEAM_THE_SQL.Categoria(
 
 --Compra
 
-create table UBUNTEAM_THE_SQL.Compra(
+create table UBUNTEAM_THE_SQL.Hechos_Compras(
 	Id int identity ,
+	Id_proveedor int NOT NULL,
+	id_producto int NOT NULL,
+	id_tiempo int NOT NULL,
+	Id_medio_pago int NOT NULL,
 	compra_numero decimal(19,0) NOT NULL,
 	compra_fecha date ,
-	Id_proveedor int NOT NULL,
-	compra_total decimal(18,2) ,
-	Id_medio_pago int NOT NULL
+	compra_total decimal(18,2),
+	compra_producto_precio decimal(18,2),
+	compra_producto_cantidad decimal(18,2)
+
 );
 
 
 
 --Proveedor
 
-create table UBUNTEAM_THE_SQL.Proveedor(
+create table UBUNTEAM_THE_SQL.Dimension_Proveedor(
 	Id int identity,
 	proveedor_cuit nvarchar(50) NOT NULL,
 	proveedor_razon_social nvarchar(50) ,
@@ -263,9 +276,18 @@ create table UBUNTEAM_THE_SQL.Proveedor(
 
 --TipoDescuento
 
-create table UBUNTEAM_THE_SQL.TipoDescuento(
+create table UBUNTEAM_THE_SQL.Dimension_TipoDescuento(
 	Id int identity ,
 	concepto_descripcion nvarchar(255) 
+);
+
+
+--Tiempo
+
+create table UBUNTEAM_THE_SQL.Dimension_Tiempo(
+	Id int identity ,
+	anio int,
+	mes int
 );
 
 
@@ -283,46 +305,46 @@ go
 
 --Categoria
 
-	alter table  UBUNTEAM_THE_SQL.Categoria  
+	alter table  UBUNTEAM_THE_SQL.Dimension_Categoria  
 	add 
 		constraint PK_Categoria primary key (Id);
 
 
 --MedioEnvio
 
-	alter table  UBUNTEAM_THE_SQL.MedioEnvio  
+	alter table  UBUNTEAM_THE_SQL.Dimension_MedioEnvio  
 	add 
 		constraint PK_MedioEnvio primary key (Id);
 
 --Canal 
 
-	alter table  UBUNTEAM_THE_SQL.Canal  
+	alter table  UBUNTEAM_THE_SQL.Dimension_Canal  
 	add 
 		constraint PK_Canal primary key (Id);
 
 
 --MedioDePago
 
-	alter table  UBUNTEAM_THE_SQL.MedioDePago  
+	alter table  UBUNTEAM_THE_SQL.Dimension_MedioDePago  
 	add 
 		constraint PK_MedioDePago primary key (Id);
 
 
 --Provincia
 
-	alter table  UBUNTEAM_THE_SQL.Provincia
+	alter table  UBUNTEAM_THE_SQL.Dimension_Provincia
 	add
 		constraint PK_Provincia primary key ( Id);
 
 
 --Cliente
 
-	alter table  UBUNTEAM_THE_SQL.Cliente  
+	alter table  UBUNTEAM_THE_SQL.Dimension_Cliente  
 	add 
 		constraint PK_Cliente primary key ( Id),
-	    constraint FK_Cliente_Localidad foreign key (Id_localidad) references UBUNTEAM_THE_SQL.Localidad(Id);
+	    --constraint FK_Cliente_Localidad foreign key (Id_localidad) references UBUNTEAM_THE_SQL.Dimension_Localidad(Id);
 
-
+/*
 --MedioEnvioPorProvincia
 
 
@@ -334,52 +356,60 @@ go
 		constraint FK_Medio_Envio_Localidad foreign key ( Id_localidad) references UBUNTEAM_THE_SQL.Localidad(Id);
 
 
+*/
+
 --Producto
 
-	alter table  UBUNTEAM_THE_SQL.Producto  
+	alter table  UBUNTEAM_THE_SQL.Dimension_Producto  
 	add 
 		constraint PK_Producto primary key (Id),
 		constraint UC_Producto_Codigo unique (prod_codigo),
-		constraint FK_Categoria foreign key ( Id_categoria) references UBUNTEAM_THE_SQL.Categoria(Id);
+		constraint FK_Categoria foreign key ( Id_categoria) references UBUNTEAM_THE_SQL.Dimension_Categoria(Id);
 
 
 
 --Venta
 
-	alter table  UBUNTEAM_THE_SQL.Venta 
+	alter table  UBUNTEAM_THE_SQL.Hechos_Venta 
 	add 
 		constraint PK_Venta primary key ( Id),
 		constraint UC_Venta_Codigo unique (venta_codigo),
-		constraint FK_Venta_Cliente foreign key ( Id_cliente) references UBUNTEAM_THE_SQL.Cliente(Id),
-		constraint FK_Venta_Canal foreign key ( Id_canal) references UBUNTEAM_THE_SQL.Canal(Id),
-		constraint FK_Venta_MedioDePago foreign key ( Id_medio_de_pago) references UBUNTEAM_THE_SQL.medioDePago(Id),
-		constraint FK_Venta_Medio_Envio_Por_Localidad foreign key ( Id_medio_envio_por_localidad) references UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad(Id);
+		constraint FK_Venta_Cliente foreign key ( Id_cliente) references UBUNTEAM_THE_SQL.Dimension_Cliente(Id),
+		constraint FK_Venta_Canal foreign key ( Id_canal) references UBUNTEAM_THE_SQL.Dimension_Canal(Id),
+		constraint FK_Venta_MedioDePago foreign key ( Id_medio_de_pago) references UBUNTEAM_THE_SQL.Dimension_MedioDePago(Id),
+		constraint FK_Venta_Medio_Envio foreign key ( Id_medio_envio) references UBUNTEAM_THE_SQL.Dimension_MedioEnvio(Id),
+		constraint FK_Tiempo foreign key ( Id_tiempo) references UBUNTEAM_THE_SQL.Dimension_Tiempo(id),
+		constraint FK_Producto_Venta foreign key ( Id_producto) references UBUNTEAM_THE_SQL.Dimension_Producto(id),
 
 
 
 --Proveedor
-	alter table  UBUNTEAM_THE_SQL.Proveedor  
+
+	alter table  UBUNTEAM_THE_SQL.Dimension_Proveedor  
 	add 
 		constraint PK_Proveedor primary key (Id),
 		constraint UC_proveedor_Cuit unique (proveedor_cuit),
-		constraint FK_Proveedor_Localidad foreign key (Id_localidad) references UBUNTEAM_THE_SQL.Localidad(Id);
+		constraint FK_Proveedor_Localidad foreign key (Id_localidad) references UBUNTEAM_THE_SQL.Dimension_Localidad(Id);
 
 
 --Compra
 
-	alter table  UBUNTEAM_THE_SQL.Compra  
+	alter table  UBUNTEAM_THE_SQL.Hechos_Compra  
 	add 
 		constraint PK_Compra primary key (Id),
 		constraint UC_Compra_Numero unique (compra_numero),
-		constraint FK_Proveedor foreign key ( Id_proveedor) references UBUNTEAM_THE_SQL.Proveedor(id),
-		constraint FK_Compra_MedioDePago foreign key ( Id_medio_pago) references UBUNTEAM_THE_SQL.MedioDePago(Id);
+		constraint FK_Proveedor foreign key ( Id_proveedor) references UBUNTEAM_THE_SQL.Dimension_Proveedor(id),
+		constraint FK_Producto_Compra foreign key ( Id_producto) references UBUNTEAM_THE_SQL.Dimension_Producto(id),
+		constraint FK_Tiempo foreign key ( Id_tiempo) references UBUNTEAM_THE_SQL.Dimension_Tiempo(id),
+		constraint FK_Compra_MedioDePago foreign key ( Id_medio_pago) references UBUNTEAM_THE_SQL.Dimension_MedioDePago(Id);
+
 
 	
 --TipooDescuento
 
-	alter table  UBUNTEAM_THE_SQL.TipoDescuento  
+	alter table  UBUNTEAM_THE_SQL.Dimension_TipoDescuento  
 	add 
-		constraint PK_tipo_Descuento primary key (Id);
+		constraint PK_Tipo_Descuento primary key (Id);
 
 
 
@@ -397,37 +427,17 @@ GO
 
 
 
-/********* Creacion de Indices *********/  -- Ver mas adelante si coviene usarlos o no
-/*
-create index IX_Cliente on UBUNTEAM_THE_SQL.Cliente (clie_codigo);
-create index IX_Venta on UBUNTEAM_THE_SQL.Venta (venta_codigo);
-create index IX_Producto on UBUNTEAM_THE_SQL.Producto (prod_codigo);
-create index IX_Compra on UBUNTEAM_THE_SQL.Compra (compra_numero);
-create index IX_Proveedor on UBUNTEAM_THE_SQL.Proveedor (proveedor_cuit);
-create index IX_Variante on UBUNTEAM_THE_SQL.Variante (var_codigo);
-create index IX_Producto_Por_Variante on UBUNTEAM_THE_SQL.ProductoPorVariante (prod_var_codigo);
-create index IX_Descuento_Compra on UBUNTEAM_THE_SQL.DescuentoPorCompra (compra_numero);
-create index IX_Descuento_Venta on UBUNTEAM_THE_SQL.DescuentoPorVenta (venta_codigo);
-create index IX_Canal on UBUNTEAM_THE_SQL.Canal (canal_codigo);
-create index IX_Medio_De_Pago on UBUNTEAM_THE_SQL.MedioDePago (medio_pago_codigo);
-create index IX_Localidad on UBUNTEAM_THE_SQL.Localidad (loc_codigo);
-create index IX_ConceptoDescuento on UBUNTEAM_THE_SQL.TipoDescuento (concepto_codigo);
-GO */
-
-
-
 /********* Creacion de StoredProcedures para migracion *********/
 
 
 --Categoria
 
-create procedure UBUNTEAM_THE_SQL.Migrar_Categorias
+create procedure UBUNTEAM_THE_SQL.Migrar_Dimension_Categorias
 as
 begin
-	insert into UBUNTEAM_THE_SQL.Categoria(categoria_descripcion)
-		select distinct M.PRODUCTO_CATEGORIA
-		from gd_esquema.Maestra as M
-		where M.PRODUCTO_CATEGORIA is not null;
+	insert into UBUNTEAM_THE_SQL.Dimension_Categoria(categoria_descripcion)
+		select categoria_descripcion
+		from UBUNTEAM_THE_SQL.Categoria
 		
 end
 go
@@ -435,13 +445,12 @@ go
 
 --MedioEnvio
 
-create procedure UBUNTEAM_THE_SQL.Migrar_MediosDeEnvio
+create procedure UBUNTEAM_THE_SQL.Migrar_Dimension_MediosDeEnvio
 as
 begin
-	insert into UBUNTEAM_THE_SQL.MedioEnvio(medio_descripcion)
-	select distinct M.VENTA_MEDIO_ENVIO
-	from gd_esquema.Maestra as M
-	where M.VENTA_MEDIO_ENVIO is not null
+	insert into UBUNTEAM_THE_SQL.Dimension_MedioEnvio(medio_descripcion)
+	select medio_pago_descripcion
+	from UBUNTEAM_THE_SQL.MedioDePago
 end
 go
 
@@ -449,13 +458,12 @@ go
 
 -- Canal
 
-create procedure UBUNTEAM_THE_SQL.Migrar_Canales
+create procedure UBUNTEAM_THE_SQL.Migrar_Dimension_Canales
 as
 begin 
-	insert into UBUNTEAM_THE_SQL.Canal(canal_descripcion)
-	select distinct M.VENTA_CANAL
-	from gd_esquema.Maestra as M
-	where M.VENTA_CANAL is not null
+	insert into UBUNTEAM_THE_SQL.Dimension_Canal(canal_descripcion)
+	select canal_descripcion
+	from UBUNTEAM_THE_SQL.Canal
 end
 go
 
@@ -463,137 +471,86 @@ go
 
 -- MedioDePago
 
-create procedure UBUNTEAM_THE_SQL.Migrar_MediosDePago
+create procedure UBUNTEAM_THE_SQL.Migrar_Dimension_MediosDePago
 as
 begin 
-	insert into UBUNTEAM_THE_SQL.MedioDePago(medio_pago_descripcion,medio_costo_transaccion)
-	select distinct M.VENTA_MEDIO_PAGO,M.VENTA_MEDIO_PAGO_COSTO
-	from gd_esquema.Maestra as M
-	where M.VENTA_MEDIO_PAGO is not null
+	insert into UBUNTEAM_THE_SQL.Dimension_MedioDePago(medio_pago_descripcion,medio_costo_transaccion)
+	select medio_pago_descripcion,medio_costo_transaccion
+	from UBUNTEAM_THE_SQL.Dimension_MedioDePago
 end
 go
 
 --Provincia
 
-create procedure UBUNTEAM_THE_SQL.Migrar_Provincias
+create procedure UBUNTEAM_THE_SQL.Migrar_Dimension_Provincias
 as
 begin 
-	insert into UBUNTEAM_THE_SQL.Provincia(prov_descripcion)
+	insert into UBUNTEAM_THE_SQL.Dimension_Provincia(prov_descripcion)
 
-	select distinct M.CLIENTE_PROVINCIA
-	from gd_esquema.Maestra as M
-	where M.CLIENTE_PROVINCIA is not null 
+	select prov_descripcion
+	from UBUNTEAM_THE_SQL.Provincia
 
-	union
-
-	select distinct M.PROVEEDOR_PROVINCIA 
-	from gd_esquema.Maestra as M
-	where M.PROVEEDOR_PROVINCIA is not null and not exists (select prov_descripcion from UBUNTEAM_THE_SQL.Provincia)
 end
 go
-
 
 
 
 -- Cliente
 
-create procedure UBUNTEAM_THE_SQL.Migrar_Clientes
+/*
+create procedure UBUNTEAM_THE_SQL.Migrar_Dimension_Clientes
 as
 begin 
 
-	insert into UBUNTEAM_THE_SQL.Cliente(clie_nombre,clie_dni,Id_localidad,clie_telefono,clie_apellido,clie_fecha_nac,clie_direccion,clie_mail)
-	select distinct M.CLIENTE_NOMBRE,
-
-					M.CLIENTE_DNI,
-	
-	(select top 1 Id from UBUNTEAM_THE_SQL.Localidad where loc_cod_postal_codigo = 	M.CLIENTE_CODIGO_POSTAL 
-														   and loc_descripcion = M.CLIENTE_LOCALIDAD  and Id_provincia =  (select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.CLIENTE_PROVINCIA ) ),
-	
-					M.CLIENTE_TELEFONO,
-
-					M.CLIENTE_APELLIDO,M.CLIENTE_FECHA_NAC,M.CLIENTE_DIRECCION,M.CLIENTE_MAIL
-
-	from gd_esquema.Maestra as M
-
-	where M.CLIENTE_NOMBRE is not null 
+	insert into UBUNTEAM_THE_SQL.Dimension_Cliente(clie_nombre,clie_dni,Id_localidad,clie_telefono,clie_apellido,clie_fecha_nac,clie_direccion,clie_mail)
 
 end
 go
 
+*/
 
 --MedioEnvioPorProvincia
 
-create procedure UBUNTEAM_THE_SQL.Migrar_MediosEnvioPorProvincia
+/*
+create procedure UBUNTEAM_THE_SQL.Migrar_Dimension_MediosEnvioPorProvincia
 as
 begin 
 
-	insert into UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad(Id_medio_envio,Id_localidad)
-	select distinct  (select top 1 Id from UBUNTEAM_THE_SQL.MedioEnvio where medio_descripcion = M.VENTA_MEDIO_ENVIO ),
-	
-	(select top 1 Id from UBUNTEAM_THE_SQL.Localidad where loc_cod_postal_codigo = 	M.CLIENTE_CODIGO_POSTAL 
-														   and loc_descripcion = M.CLIENTE_LOCALIDAD  and Id_provincia = (select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.CLIENTE_PROVINCIA ) )
+	insert into UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorLocalidad(Id_medio_envio,Id_localidad)
 
-
-	from gd_esquema.Maestra as M
-
-	where M.VENTA_MEDIO_ENVIO is not null
 
 end
 go
 
-
+*/
 
 --Venta
 
-
+/*
 create procedure UBUNTEAM_THE_SQL.Migrar_Ventas
 as
 begin 
 
-	insert into UBUNTEAM_THE_SQL.Venta(venta_codigo,venta_fecha,Id_cliente,venta_total,Id_canal,Id_medio_de_pago,Id_medio_envio_por_localidad,venta_envio_precio, venta_canal_costo,venta_medio_de_pago_costo)
-	select distinct M.VENTA_CODIGO,
-					M.VENTA_FECHA,
-		
-		(select top 1 Id from UBUNTEAM_THE_SQL.Cliente where clie_nombre = M.CLIENTE_NOMBRE )
+	insert into UBUNTEAM_THE_SQL.Dimension_Venta(venta_codigo,venta_fecha,Id_cliente,venta_total,Id_canal,Id_medio_de_pago,Id_medio_envio_por_localidad,venta_envio_precio, venta_canal_costo,venta_medio_de_pago_costo)
 
-
-		,M.VENTA_TOTAL,
-						(select top 1 Id from UBUNTEAM_THE_SQL.Canal where canal_descripcion = VENTA_CANAL ), (select top 1 Id from UBUNTEAM_THE_SQL.MedioDePago where medio_pago_descripcion =M.VENTA_MEDIO_PAGO ),
-
-						(select top 1 Id from UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad  where Id_localidad = (select top 1 Id from UBUNTEAM_THE_SQL.Localidad where loc_cod_postal_codigo = 	M.CLIENTE_CODIGO_POSTAL 
-														   and loc_descripcion = M.CLIENTE_LOCALIDAD  and Id_provincia = (select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.CLIENTE_PROVINCIA ) ) and Id_medio_envio =  (select top 1 Id from UBUNTEAM_THE_SQL.MedioEnvio where medio_descripcion = VENTA_MEDIO_ENVIO ) ) ,
-						
-						M.VENTA_ENVIO_PRECIO,M.VENTA_CANAL_COSTO,M.VENTA_MEDIO_PAGO_COSTO
-	from gd_esquema.Maestra as M
-
-
-	where M.VENTA_CODIGO is not null  
 end
 go
 
-
+*/
 
 
 
 --Producto
 
-create procedure UBUNTEAM_THE_SQL.Migrar_Productos
+create procedure UBUNTEAM_THE_SQL.Migrar_Dimension_Productos
 as
 begin
-	insert into UBUNTEAM_THE_SQL.Producto(prod_codigo,prod_descripcion,Id_categoria,prod_marca,prod_material,prod_nombre)
-		select distinct  M.PRODUCTO_CODIGO,M.PRODUCTO_DESCRIPCION,
-		
-		(select top 1 Id from UBUNTEAM_THE_SQL.Categoria where categoria_descripcion= PRODUCTO_CATEGORIA ),
-		
-		M.PRODUCTO_MARCA,
-		
-		M.PRODUCTO_MATERIAL,
-		
-		M.PRODUCTO_NOMBRE
+	insert into UBUNTEAM_THE_SQL.Dimension_Producto(prod_codigo,prod_descripcion,Id_categoria,prod_marca,prod_material,prod_nombre)
+	
+	select prod_codigo,prod_descripcion,UBUNTEAM_THE_SQL.Categoria.Id,prod_marca,prod_material,prod_nombre
 
-		from gd_esquema.Maestra as M
-
-		where M.PRODUCTO_CODIGO is not null
+	from UBUNTEAM_THE_SQL.Producto
+	join Categoria on Id_categoria = Categoria.Id
 end
 go
 
@@ -602,63 +559,37 @@ go
 
 --Proveedor
 
-create procedure UBUNTEAM_THE_SQL.Migrar_Proveedores
+/*
+create procedure UBUNTEAM_THE_SQL.Migrar_Dimension_Proveedores
 as
 begin
-	insert into UBUNTEAM_THE_SQL.Proveedor(proveedor_cuit, proveedor_razon_social, proveedor_domicilio,id_localidad, proveedor_mail)
-		select distinct M.PROVEEDOR_CUIT, 
-
-		M.PROVEEDOR_RAZON_SOCIAL,
-
-		M.PROVEEDOR_DOMICILIO,
-	
-	(select top 1 Id from UBUNTEAM_THE_SQL.Localidad where loc_cod_postal_codigo = 	M.PROVEEDOR_CODIGO_POSTAL 
-														   and loc_descripcion = M.PROVEEDOR_LOCALIDAD and Id_provincia = (select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.PROVEEDOR_PROVINCIA )),
-
-		 M.PROVEEDOR_MAIL
-
-		from gd_esquema.Maestra M
-
-		where M.PROVEEDOR_CUIT is not null 
+	insert into UBUNTEAM_THE_SQL.Dimension_Proveedor(proveedor_cuit, proveedor_razon_social, proveedor_domicilio,id_localidad, proveedor_mail)
+		
 end
 go
 
-
+*/
 --Compra
 
-
-create procedure UBUNTEAM_THE_SQL.Migrar_Compras 
+/*
+create procedure UBUNTEAM_THE_SQL.Migrar_Hechos_Compras 
  as
- begin 	insert into UBUNTEAM_THE_SQL.Compra(compra_numero, compra_fecha, Id_proveedor, compra_total,Id_medio_pago)
-		select distinct M.compra_numero,
-						M.compra_fecha, 
-
-						(select top 1 Id from UBUNTEAM_THE_SQL.Proveedor where proveedor_cuit = M.PROVEEDOR_CUIT and proveedor_domicilio = M.PROVEEDOR_DOMICILIO
-														and proveedor_mail = M.PROVEEDOR_MAIL and proveedor_razon_social = M.PROVEEDOR_RAZON_SOCIAL 
-														and Id_localidad = (select top 1 Id from UBUNTEAM_THE_SQL.Localidad where loc_cod_postal_codigo = 	M.PROVEEDOR_CODIGO_POSTAL 
-														   and loc_descripcion = M.PROVEEDOR_LOCALIDAD and Id_provincia = (select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.PROVEEDOR_PROVINCIA )   )  ),
-						
-						M.COMPRA_TOTAL,
-
-						(select top 1 Id from UBUNTEAM_THE_SQL.MedioDePago where medio_pago_descripcion = M.COMPRA_MEDIO_PAGO  )
-
-		from gd_esquema.Maestra M
-
- 		where M.COMPRA_NUMERO is not null and M.COMPRA_MEDIO_PAGO is not null
+ begin 	insert into UBUNTEAM_THE_SQL.Dimension_Compra(compra_numero, compra_fecha, Id_proveedor, compra_total,Id_medio_pago)
+		
 end
 go 
 
+*/
 
 --TipoDescuento
 
-create procedure UBUNTEAM_THE_SQL.Migrar_TiposDeDescuento
+create procedure UBUNTEAM_THE_SQL.Migrar_Dimension_TiposDeDescuento
  as
- begin 	insert into UBUNTEAM_THE_SQL.TipoDescuento(concepto_descripcion)
-		select distinct M.VENTA_DESCUENTO_CONCEPTO
+ begin 	insert into UBUNTEAM_THE_SQL.Dimension_TipoDescuento(concepto_descripcion)
 		
-		from gd_esquema.Maestra M
+		select TipoDescuento.concepto_descripcion
 
- 		where M.VENTA_DESCUENTO_CONCEPTO is not null
+		from UBUNTEAM_THE_SQL.TipoDescuento
 end
 go 
 
@@ -673,54 +604,34 @@ go
 
 --Tablas sin FKs (tienen que ir primero porque el resto de las tablas depende de estas)
 
-	EXECUTE UBUNTEAM_THE_SQL.Migrar_Categorias;
-	print '**** Migracion de Categorias Exitosa****';
-	EXECUTE UBUNTEAM_THE_SQL.Migrar_MediosDeEnvio;
-	print '**** Migracion de Medios de Envio Exitosa****';
-	EXECUTE UBUNTEAM_THE_SQL.Migrar_MediosDePago;
-	print '**** Migracion de Medios de Pago Exitosa****';
-	EXECUTE UBUNTEAM_THE_SQL.Migrar_Provincias;
-	print '**** Migracion de Provincias Exitosa****';
-	EXECUTE UBUNTEAM_THE_SQL.Migrar_Canales ;
-	print '**** Migracion de Canales Exitosa****';
-	EXECUTE UBUNTEAM_THE_SQL.Migrar_TiposDeDescuento;
-	print '**** Migracion de Tipos de Descuento Exitosa****';
+	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_Categorias;
+	print '**** Migracion de Dimension_Categorias Exitosa****';
+	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_MediosDeEnvio;
+	print '**** Migracion de Dimension_Medios de Envio Exitosa****';
+	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_MediosDePago;
+	print '**** Migracion de Dimension_ Medios de Pago Exitosa****';
+	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_Provincias;
+	print '**** Migracion de Dimension_Provincias Exitosa****';
+	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_Canales ;
+	print '**** Migracion de Dimension_Canales Exitosa****';
+	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_TiposDeDescuento;
+	print '**** Migracion de Dimension_Tipos de Descuento Exitosa****';
 
-	/*delete from UBUNTEAM_THE_SQL.Categoria
-	delete from UBUNTEAM_THE_SQL.TipoVariante
-	delete from UBUNTEAM_THE_SQL.MedioEnvio
-	delete from UBUNTEAM_THE_SQL.MedioDePago
-	delete from UBUNTEAM_THE_SQL.Provincia
-	delete from UBUNTEAM_THE_SQL.Canal
-	delete from UBUNTEAM_THE_SQL.Cupon
-	delete from UBUNTEAM_THE_SQL.TipoDescuento
-	delete from UBUNTEAM_THE_SQL.Producto
-	delete from UBUNTEAM_THE_SQL.Variante
-	delete from UBUNTEAM_THE_SQL.ProductoPorVariante
-	delete from UBUNTEAM_THE_SQL.Localidad
-	delete from UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad
-	delete from UBUNTEAM_THE_SQL.Proveedor
-	delete from UBUNTEAM_THE_SQL.Cliente
-	delete from UBUNTEAM_THE_SQL.Compra
-	delete from UBUNTEAM_THE_SQL.Venta
-	delete from UBUNTEAM_THE_SQL.VentaPorCupon
-	delete from UBUNTEAM_THE_SQL.DescuentoPorCompra
-	delete from UBUNTEAM_THE_SQL.DescuentoPorVenta
-*/
+
 	--Tablas con FKs a tablas que tienen FKs (tener cuidado porque aca s  importa el orden de EXEC de los SPs)
 
-	EXECUTE UBUNTEAM_THE_SQL.Migrar_Productos ;
-	print '**** Migracion de Productos Exitosa****';
-	EXECUTE UBUNTEAM_THE_SQL.Migrar_MediosEnvioPorProvincia;
-	print '**** Migracion de Medios de Envio por Localidad Exitosa****';
-	EXECUTE UBUNTEAM_THE_SQL.Migrar_Proveedores ;
-	print '**** Migracion de Proveedores Exitosa****';
-	EXECUTE UBUNTEAM_THE_SQL.Migrar_Clientes;
-	print '**** Migracion de Clientes Exitosa****';
-	EXECUTE UBUNTEAM_THE_SQL.Migrar_Compras;
-	print '**** Migracion de Compras Exitosa****';
-	EXECUTE UBUNTEAM_THE_SQL.Migrar_Ventas;
-	print '**** Migracion de Ventas Exitosa****';
+	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_Productos ;
+	print '**** Migracion de Dimension_Productos Exitosa****';
+	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_MediosEnvioPorProvincia;
+	print '**** Migracion de Dimension_Medios de Envio por Localidad Exitosa****';
+	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_Proveedores ;
+	print '**** Migracion de Dimension_Proveedores Exitosa****';
+	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_Clientes;
+	print '**** Migracion de Dimension_Clientes Exitosa****';
+	EXECUTE UBUNTEAM_THE_SQL.Migrar_Hechos_Compras;
+	print '**** Migracion de Hechos_Compras Exitosa****';
+	EXECUTE UBUNTEAM_THE_SQL.Migrar_Hechos_Ventas;
+	print '**** Migracion de Hechos_Ventas Exitosa****';
 
 	--Tablas con FKs a tablas que no tienen FKs (van ahora porque ya se migraron las tablas sin FKs, que son de las que dependen estas tablas)
 
@@ -728,24 +639,23 @@ go
 
 
 IF (
-	EXISTS (SELECT  * FROM UBUNTEAM_THE_SQL.Canal)
-	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Categoria)
-	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Cliente)
-	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Proveedor)
-	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Compra)
-	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Producto)
-	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.MedioEnvio)
-	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.MedioDePago)
-	and EXISTS (SELECT  * FROM UBUNTEAM_THE_SQL.MedioEnvioPorProvincia)
-	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Venta)
-	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Variante)
-	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.TipoDescuento)
-	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Provincia)
+	EXISTS (SELECT  * FROM UBUNTEAM_THE_SQL.Dimension_Canal)
+	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Dimension_Categoria)
+	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Dimension_Cliente)
+	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Dimension_Proveedor)
+	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Hechos_Compras)
+	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Dimension_Producto)
+	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Dimension_MedioEnvio)
+	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Dimension_MedioDePago)
+	--and EXISTS (SELECT  * FROM UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorProvincia)
+	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Hechos_Ventas)
+	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Dimension_TipoDescuento)
+	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Dimension_Provincia)
 	
 )
 
 
-	PRINT 'Tablas migradas correctamente.';
+	PRINT 'Tablas BI migradas correctamente.';
 
 
 
