@@ -462,7 +462,7 @@ create procedure UBUNTEAM_THE_SQL.Migrar_Dimension_Canales
 as
 begin 
 	insert into UBUNTEAM_THE_SQL.Dimension_Canal(canal_descripcion)
-	select canal_descripcion
+	select canal_descripcion,canal_costo
 	from UBUNTEAM_THE_SQL.Canal
 end
 go
