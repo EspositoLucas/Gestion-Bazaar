@@ -153,17 +153,17 @@ create table UBUNTEAM_THE_SQL.Dimension_Provincia(
 
 --MedioEnvioPorProvincia
 
-/*
-create table UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad(
+
+create table UBUNTEAM_THE_SQL.MedioEnvioPorProvincia(
 	Id int identity ,
 	Id_medio_envio int  NOT NULL,
-	Id_localidad int  NOT NULL,
+	Id_provincia int  NOT NULL,
 	medio_envio_precio decimal(18,2),
 	medio_envio_tiempo_estimado smalldatetime 
 	 
 ); 
 
-*/
+
 -- Venta
 
 create table UBUNTEAM_THE_SQL.Hechos_Ventas(
@@ -171,7 +171,7 @@ create table UBUNTEAM_THE_SQL.Hechos_Ventas(
 	Id_cliente int NOT NULL,
 	Id_canal int NOT NULL,
 	Id_medio_de_pago int NOT NULL,
-	Id_medio_envio int NOT NULL,
+	Id_medio_envio_provincia int NOT NULL,
 	id_tiempo int NOT NULL,
 	id_producto int NOT NULL,
 	id_tipo_descuento int NOT NULL,
@@ -181,8 +181,10 @@ create table UBUNTEAM_THE_SQL.Hechos_Ventas(
 	venta_envio_precio decimal(18,2),
 	venta_canal_costo decimal(18,2) ,
 	venta_medio_de_pago_costo decimal(18,2),
-	venta_producto_precio decimal(18,2,
-	venta_producto_cantidad decimal(12,2)
+	venta_producto_precio decimal(18,2),
+	venta_producto_cantidad decimal(12,2),
+	desc_venta_importe decimal(18,2)
+
 	 
 
 );
@@ -255,7 +257,8 @@ create table UBUNTEAM_THE_SQL.Hechos_Compras(
 	compra_fecha date ,
 	compra_total decimal(18,2),
 	compra_producto_precio decimal(18,2),
-	compra_producto_cantidad decimal(18,2)
+	compra_producto_cantidad decimal(18,2),
+	desc_compra_valor decimal(18,2)
 
 );
 
@@ -341,10 +344,10 @@ go
 
 	alter table  UBUNTEAM_THE_SQL.Dimension_Cliente  
 	add 
-		constraint PK_Cliente primary key ( Id),
+		constraint PK_Cliente primary key ( Id);
 	    --constraint FK_Cliente_Localidad foreign key (Id_localidad) references UBUNTEAM_THE_SQL.Dimension_Localidad(Id);
 
-/*
+
 --MedioEnvioPorProvincia
 
 
@@ -353,10 +356,10 @@ go
 	add 
 		constraint PK_MedioEnvioPorLocalidad primary key (Id),
 		constraint FK_Medio_Envio foreign key (Id_medio_envio) references UBUNTEAM_THE_SQL.MedioEnvio(Id),
-		constraint FK_Medio_Envio_Localidad foreign key ( Id_localidad) references UBUNTEAM_THE_SQL.Localidad(Id);
+		constraint FK_Medio_Envio_Provincia foreign key ( Id_provincia) references UBUNTEAM_THE_SQL.Provincia(Id);
 
 
-*/
+
 
 --Producto
 
@@ -377,9 +380,10 @@ go
 		constraint FK_Venta_Cliente foreign key ( Id_cliente) references UBUNTEAM_THE_SQL.Dimension_Cliente(Id),
 		constraint FK_Venta_Canal foreign key ( Id_canal) references UBUNTEAM_THE_SQL.Dimension_Canal(Id),
 		constraint FK_Venta_MedioDePago foreign key ( Id_medio_de_pago) references UBUNTEAM_THE_SQL.Dimension_MedioDePago(Id),
-		constraint FK_Venta_Medio_Envio foreign key ( Id_medio_envio) references UBUNTEAM_THE_SQL.Dimension_MedioEnvio(Id),
+		constraint FK_Venta_Medio_Envio_Por_Provincia foreign key ( Id_medio_envio_provincia) references UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorProvincia(Id),
 		constraint FK_Tiempo foreign key ( Id_tiempo) references UBUNTEAM_THE_SQL.Dimension_Tiempo(id),
 		constraint FK_Producto_Venta foreign key ( Id_producto) references UBUNTEAM_THE_SQL.Dimension_Producto(id),
+		constraint FK_Tipo_Descuento foreign key ( Id_tipo_descuento) references UBUNTEAM_THE_SQL.Dimension_Tipo_Descuento(id)
 
 
 
@@ -419,6 +423,143 @@ go
 
 /********* Creacion de Vistas *********/
 
+
+-- Ganancias Mensuales
+
+
+create view UBUNTEAM_THE_SQL.v_BI_Canal_Ventas_Ganancias_Mensuales
+as
+	
+	select DC.canal_descripcion,
+			HV.venta_total,
+			HC.compra_total,
+			DM.medio_costo_transaccion,
+			(HV.venta_total - HC.compra_total -DM.medio_costo_transaccion) total_venta
+			
+
+	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
+	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on HV.id_tiempo  = DT.Id
+	join UBUNTEAM_THE_SQL.Dimension_Canal DC on DC.Id = HV.Id_canal 
+	join UBUNTEAM_THE_SQL.Dimension_MedioDePago DM on DM.Id = HV.Id_medio_de_pago
+	join UBUNTEAM_THE_SQL.Hechos_Compras HC on HC.Id_medio_pago = HV.Id_medio_de_pago
+
+	group by canal_descripcion
+
+	order by DT.mes desc
+
+
+go
+
+
+--Productos Con Mayor Rentabilidad
+
+create view UBUNTEAM_THE_SQL.v_BI_Productos_Con_Mayor_Rentabilidad
+as
+	
+	select top 5 DP.prod_codigo,
+				 DP.prod_descripcion,
+				 (str(DT1.anio) + str(DT1.mes)) periodo_venta ,
+				 (str(DT2.anio) + str(DT2.mes)) periodo_compra,
+				( 100 * (sum(HV.venta_producto_precio * HV.venta_producto_cantidad) - sum(HC.compra_producto_precio * HC.compra_producto_cantidad))
+				/ sum(HV.venta_producto_precio * HV.venta_producto_cantidad) + sum (HC.compra_producto_precio * HC.compra_producto_cantidad)) rentabilidad
+
+
+				
+			
+
+	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
+	join UBUNTEAM_THE_SQL.Dimension_Producto DP on  HV.id_producto = DP.Id
+	join UBUNTEAM_THE_SQL.Hechos_Compras HC on HC.id_producto = HV.id_producto
+	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT1 on DT1.Id = HV.id_tiempo 
+	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT2 on DT2.Id = HC.id_tiempo
+
+	group by  DP.prod_codigo,DP.prod_descripcion, DT1.anio,DT1.mes,DT2.anio,DT2.mes
+	order by sum(HV.venta_producto_precio * HV.venta_producto_cantidad),sum(HC.compra_producto_precio * HC.compra_producto_cantidad) desc
+go
+
+
+
+--Categorias mas vendidas
+
+create view UBUNTEAM_THE_SQL.v_BI_Categorias_Mas_Vendidas
+as
+	
+	select top 5 DC.categoria_descripcion,
+				 DCL.clie_edad,
+				 DT.mes
+
+
+				
+			
+
+	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
+	join UBUNTEAM_THE_SQL.Dimension_Cliente DCL on DCL.Id = HV.Id_cliente
+	join UBUNTEAM_THE_SQL.Dimension_Producto DP on  HV.id_producto = DP.Id
+	join UBUNTEAM_THE_SQL.Dimension_Categoria DC on DC.Id = DP.Id_categoria
+	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on DT.Id = HV.id_tiempo
+
+	group by  DC.categoria_descripcion,DCL.clie_edad,DT.mes
+	order by HV.venta_total desc
+go
+
+
+--Ingresos por Medio de Pago
+
+create view UBUNTEAM_THE_SQL.v_BI_Ingresos_Por_Medio_De_Pago
+as
+	select DM.medio_pago_descripcion,
+				 DT.mes,
+				 DTS.concepto_descripcion,
+				 (HV.venta_total - HV.venta_medio_de_pago_costo -HV.desc_venta_importe) ingreso_total
+		
+			
+
+	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
+	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on DT.Id = HV.id_tiempo
+	join UBUNTEAM_THE_SQL.Dimension_MedioDePago DM on DM.Id = HV.Id_medio_de_pago
+	join UBUNTEAM_THE_SQL.Dimension_TipoDescuento DTS on DTS.Id = HV.Id
+
+
+	where DTS.concepto_descripcion = 'Otros'
+	group by  DM.medio_pago_descripcion,DT.mes
+	order by HV.venta_total desc
+	
+go
+
+
+-- Importe Total Descuentos
+
+/*
+create view UBUNTEAM_THE_SQL.v_BI_Importe_Total_Descuentos
+as
+	
+go
+
+*/
+
+-- Valor Promedio Envio por Provincia
+
+/*
+create view UBUNTEAM_THE_SQL.v_BI_Valor_Promedio_Envio_Por_Provincia
+as
+	
+	select DMP.Id_medio_envio,
+				
+				DMP.Id_provincia,
+
+				avg(DMP.medio_envio_precio)
+
+				
+			
+
+	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
+	join UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorProvincia DMP on HV.Id_medio_envio_provincia = DMP.id
+
+	group by  DMP.Id_medio_envio,DMP.Id_provincia
+
+go
+
+*/
 
 
 PRINT '**** Vistas BI creadas correctamente ****';
@@ -516,13 +657,19 @@ create procedure UBUNTEAM_THE_SQL.Migrar_Dimension_MediosEnvioPorProvincia
 as
 begin 
 
-	insert into UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorLocalidad(Id_medio_envio,Id_localidad)
+	insert into UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorProvincia(Id_medio_envio,Id_provincia,medio_envio_precio,medio_envio_tiempo_estimado)
+	select UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad.Id_medio_envio,(select UBUNTEAM_THE_SQL.Provincia.Id from UBUNTEAM_THE_SQL.Provincia)
+			,UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad.medio_envio_precio,
+			UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad.medio_envio_tiempo_estimado
 
+
+		from UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad
 
 end
 go
 
 */
+
 
 --Venta
 
@@ -622,15 +769,15 @@ go
 
 	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_Productos ;
 	print '**** Migracion de Dimension_Productos Exitosa****';
-	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_MediosEnvioPorProvincia;
+	--EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_MediosEnvioPorProvincia;
 	print '**** Migracion de Dimension_Medios de Envio por Localidad Exitosa****';
-	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_Proveedores ;
+	--EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_Proveedores ;
 	print '**** Migracion de Dimension_Proveedores Exitosa****';
-	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_Clientes;
+	--EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_Clientes;
 	print '**** Migracion de Dimension_Clientes Exitosa****';
-	EXECUTE UBUNTEAM_THE_SQL.Migrar_Hechos_Compras;
+	--EXECUTE UBUNTEAM_THE_SQL.Migrar_Hechos_Compras;
 	print '**** Migracion de Hechos_Compras Exitosa****';
-	EXECUTE UBUNTEAM_THE_SQL.Migrar_Hechos_Ventas;
+	--EXECUTE UBUNTEAM_THE_SQL.Migrar_Hechos_Ventas;
 	print '**** Migracion de Hechos_Ventas Exitosa****';
 
 	--Tablas con FKs a tablas que no tienen FKs (van ahora porque ya se migraron las tablas sin FKs, que son de las que dependen estas tablas)
