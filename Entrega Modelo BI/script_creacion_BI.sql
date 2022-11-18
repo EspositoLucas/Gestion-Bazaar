@@ -65,8 +65,8 @@ IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_Client
 go
 
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_MediosDeEnvioPorLocalidad')
-	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Dimension_MediosDeEnvioPorLocalidad;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_MediosDeEnvioPorProvincia')
+	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Dimension_MediosDeEnvioPorProvincia;
 go
 
 IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Hechos_Ventas')
