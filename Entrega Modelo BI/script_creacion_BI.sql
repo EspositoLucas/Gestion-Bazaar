@@ -20,6 +20,7 @@ PRINT '**** CONSTRAINTs dropeadas correctamente ****';
 
 GO
 
+/*
 DECLARE @DropTables NVARCHAR(max) = ''
 
 SELECT @DropTables += 'DROP TABLE UBUNTEAM_THE_SQL. ' + QUOTENAME(TABLE_NAME)
@@ -33,6 +34,49 @@ EXECUTE sp_executesql @DropTables;
 PRINT '**** TABLAS dropeadas correctamente ****';
 
 GO
+
+*/
+
+/********* Drop de Tablas *********/
+
+IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Dimension_Cliente')
+	DROP TABLE UBUNTEAM_THE_SQL.Dimension_Cliente;
+
+IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Dimension_Provincia')
+	DROP TABLE UBUNTEAM_THE_SQL.Dimension_Provincia;
+
+IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Dimension_MedioEnvioPorProvincia')
+	DROP TABLE UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorProvincia;
+
+IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Hechos_Ventas')
+	DROP TABLE UBUNTEAM_THE_SQL.Hechos_Ventas;
+
+IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Dimension_Canal')
+	DROP TABLE UBUNTEAM_THE_SQL.Dimension_Canal;
+
+IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Dimension_MedioDePago')
+	DROP TABLE UBUNTEAM_THE_SQL.Dimension_MedioDePago;
+
+IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Dimension_MedioEnvio')
+	DROP TABLE UBUNTEAM_THE_SQL.Dimension_MedioEnvio;
+
+IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Dimension_Producto')
+	DROP TABLE UBUNTEAM_THE_SQL.Dimension_Producto;
+
+IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Dimension_Categoria')
+	DROP TABLE UBUNTEAM_THE_SQL.Dimension_Categoria;
+
+IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Hechos_Compras')
+	DROP TABLE UBUNTEAM_THE_SQL.Hechos_Compras;
+
+IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Dimension_Proveedor')
+	DROP TABLE UBUNTEAM_THE_SQL.Dimension_Proveedor;
+
+IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Dimension_TipoDescuento')
+	DROP TABLE UBUNTEAM_THE_SQL.Dimension_TipoDescuento;
+
+IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Dimension_Tiempo')
+	DROP TABLE UBUNTEAM_THE_SQL.Dimension_Tiempo;
 
 
 /********* Drop de Stored Procedures *********/
@@ -65,8 +109,8 @@ IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_Client
 go
 
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_MediosDeEnvioPorProvincia')
-	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Dimension_MediosDeEnvioPorProvincia;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_MediosEnvioPorProvincia')
+	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Dimension_MediosEnvioPorProvincia;
 go
 
 IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Hechos_Ventas')
@@ -91,7 +135,9 @@ IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_TiposD
 	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Dimension_TiposDeDescuento;
 go
 
-
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_Tiempo')
+	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Dimension_Tiempo;
+go
 
 
 PRINT '**** SPs dropeados correctamente ****';
@@ -100,13 +146,33 @@ go
 
 
 
-PRINT '**** Vistas BI dropeadas correctamente ****';
 
-GO
 
 /********* Drop de Vistas *********/
 
+IF EXISTS (SELECT name FROM sys.objects WHERE name = 'v_BI_Canal_Ventas_Ganancias_Mensuales')
+	DROP VIEW UBUNTEAM_THE_SQL.v_BI_Canal_Ventas_Ganancias_Mensuales;
 
+IF EXISTS (SELECT name FROM sys.objects WHERE name = 'v_BI_Productos_Con_Mayor_Rentabilidad')
+	DROP VIEW UBUNTEAM_THE_SQL.v_BI_Productos_Con_Mayor_Rentabilidad;
+
+IF EXISTS (SELECT name FROM sys.objects WHERE name = 'v_BI_Categorias_Mas_Vendidas')
+	DROP VIEW UBUNTEAM_THE_SQL.v_BI_Categorias_Mas_Vendidas;
+
+IF EXISTS (SELECT name FROM sys.objects WHERE name = 'v_BI_Ingresos_Por_Medio_De_Pago')
+	DROP VIEW UBUNTEAM_THE_SQL.v_BI_Ingresos_Por_Medio_De_Pago;
+
+IF EXISTS (SELECT name FROM sys.objects WHERE name = 'v_BI_Importe_Total_Descuentos')
+	DROP VIEW UBUNTEAM_THE_SQL.v_BI_Importe_Total_Descuentos;
+
+IF EXISTS (SELECT name FROM sys.objects WHERE name = 'v_BI_Valor_Promedio_Envio_Por_Provincia')
+	DROP VIEW UBUNTEAM_THE_SQL.v_BI_Valor_Promedio_Envio_Por_Provincia;
+
+
+
+PRINT '**** Vistas BI dropeadas correctamente ****';
+
+GO
 /********* Drop de Schema *********/
 
 
@@ -309,53 +375,53 @@ go
 
 	alter table  UBUNTEAM_THE_SQL.Dimension_Categoria  
 	add 
-		constraint PK_Categoria primary key (Id);
+		constraint PK_BI_Categoria primary key (Id);
 
 
 --MedioEnvio
 
 	alter table  UBUNTEAM_THE_SQL.Dimension_MedioEnvio  
 	add 
-		constraint PK_MedioEnvio primary key (Id);
+		constraint PK_BI_MedioEnvio primary key (Id);
 
 --Canal 
 
 	alter table  UBUNTEAM_THE_SQL.Dimension_Canal  
 	add 
-		constraint PK_Canal primary key (Id);
+		constraint PK_BI_Canal primary key (Id);
 
 
 --MedioDePago
 
 	alter table  UBUNTEAM_THE_SQL.Dimension_MedioDePago  
 	add 
-		constraint PK_MedioDePago primary key (Id);
+		constraint PK_BI_MedioDePago primary key (Id);
 
 
 --Provincia
 
 	alter table  UBUNTEAM_THE_SQL.Dimension_Provincia
 	add
-		constraint PK_Provincia primary key ( Id);
+		constraint PK_BI_Provincia primary key ( Id);
 
 
 --Cliente
 
 	alter table  UBUNTEAM_THE_SQL.Dimension_Cliente  
 	add 
-		constraint PK_Cliente primary key ( Id),
-	    constraint FK_Cliente_Provincia foreign key (Id_provincia) references UBUNTEAM_THE_SQL.Dimension_Provincia(Id);
+		constraint PK_BI_Cliente primary key ( Id),
+	    constraint FK_BI_Cliente_Provincia foreign key (Id_provincia) references UBUNTEAM_THE_SQL.Dimension_Provincia(Id);
 
 
 --MedioEnvioPorProvincia
 
 
 
-	alter table  UBUNTEAM_THE_SQL.MedioEnvioPorProvincia
+	alter table  UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorProvincia
 	add 
-		constraint PK_MedioEnvioPorLocalidad primary key (Id),
-		constraint FK_Medio_Envio foreign key (Id_medio_envio) references UBUNTEAM_THE_SQL.MedioEnvio(Id),
-		constraint FK_Medio_Envio_Provincia foreign key ( Id_provincia) references UBUNTEAM_THE_SQL.Provincia(Id);
+		constraint PK_BI_MedioEnvioPorProvincia primary key (Id),
+		constraint FK_BI_Medio_Envio foreign key (Id_medio_envio) references UBUNTEAM_THE_SQL.Dimension_MedioEnvio(Id),
+		constraint FK_BI_Medio_Envio_Provincia foreign key ( Id_provincia) references UBUNTEAM_THE_SQL.Dimension_Provincia(Id);
 
 
 
@@ -364,25 +430,25 @@ go
 
 	alter table  UBUNTEAM_THE_SQL.Dimension_Producto  
 	add 
-		constraint PK_Producto primary key (Id),
-		constraint UC_Producto_Codigo unique (prod_codigo),
-		constraint FK_Categoria foreign key ( Id_categoria) references UBUNTEAM_THE_SQL.Dimension_Categoria(Id);
+		constraint PK_BI_Producto primary key (Id),
+		constraint UC_BI_Producto_Codigo unique (prod_codigo),
+		constraint FK_BI_Categoria foreign key ( Id_categoria) references UBUNTEAM_THE_SQL.Dimension_Categoria(Id);
 
 
 
 --Venta
 
-	alter table  UBUNTEAM_THE_SQL.Hechos_Venta 
+	alter table  UBUNTEAM_THE_SQL.Hechos_Ventas 
 	add 
-		constraint PK_Venta primary key ( Id),
-		constraint UC_Venta_Codigo unique (venta_codigo),
-		constraint FK_Venta_Cliente foreign key ( Id_cliente) references UBUNTEAM_THE_SQL.Dimension_Cliente(Id),
-		constraint FK_Venta_Canal foreign key ( Id_canal) references UBUNTEAM_THE_SQL.Dimension_Canal(Id),
-		constraint FK_Venta_MedioDePago foreign key ( Id_medio_de_pago) references UBUNTEAM_THE_SQL.Dimension_MedioDePago(Id),
-		constraint FK_Venta_Medio_Envio_Por_Provincia foreign key ( Id_medio_envio_provincia) references UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorProvincia(Id),
-		constraint FK_Tiempo foreign key ( Id_tiempo) references UBUNTEAM_THE_SQL.Dimension_Tiempo(id),
-		constraint FK_Producto_Venta foreign key ( Id_producto) references UBUNTEAM_THE_SQL.Dimension_Producto(id),
-		constraint FK_Tipo_Descuento foreign key ( Id_tipo_descuento) references UBUNTEAM_THE_SQL.Dimension_Tipo_Descuento(id)
+		constraint PK_BI_Venta primary key ( Id),
+		constraint UC_BI_Venta_Codigo unique (venta_codigo),
+		constraint FK_BI_Venta_Cliente foreign key ( Id_cliente) references UBUNTEAM_THE_SQL.Dimension_Cliente(Id),
+		constraint FK_BI_Venta_Canal foreign key ( Id_canal) references UBUNTEAM_THE_SQL.Dimension_Canal(Id),
+		constraint FK_BI_Venta_MedioDePago foreign key ( Id_medio_de_pago) references UBUNTEAM_THE_SQL.Dimension_MedioDePago(Id),
+		constraint FK_BI_Venta_Medio_Envio_Por_Provincia foreign key ( Id_medio_envio_provincia) references UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorProvincia(Id),
+		constraint FK_BI_Tiempo foreign key ( id_tiempo) references UBUNTEAM_THE_SQL.Dimension_Tiempo(Id),
+		constraint FK_BI_Producto_Venta foreign key ( id_producto) references UBUNTEAM_THE_SQL.Dimension_Producto(Id),
+		constraint FK_BI_Tipo_Descuento foreign key ( Id_tipo_descuento) references UBUNTEAM_THE_SQL.Dimension_Tipo_Descuento(id)
 
 
 
@@ -390,21 +456,21 @@ go
 
 	alter table  UBUNTEAM_THE_SQL.Dimension_Proveedor  
 	add 
-		constraint PK_Proveedor primary key (Id),
-		constraint UC_proveedor_Cuit unique (proveedor_cuit),
-		constraint FK_Proveedor_Provincia foreign key (Id_provincia) references UBUNTEAM_THE_SQL.Dimension_Provincia(Id);
+		constraint PK_BI_Proveedor primary key (Id),
+		constraint UC_BI_proveedor_Cuit unique (proveedor_cuit),
+		constraint FK_BI_Proveedor_Provincia foreign key (Id_provincia) references UBUNTEAM_THE_SQL.Dimension_Provincia(Id);
 
 
 --Compra
 
 	alter table  UBUNTEAM_THE_SQL.Hechos_Compras  
 	add 
-		constraint PK_Compra primary key (Id),
-		constraint UC_Compra_Numero unique (compra_numero),
-		constraint FK_Proveedor foreign key ( Id_proveedor) references UBUNTEAM_THE_SQL.Dimension_Proveedor(id),
-		constraint FK_Producto_Compra foreign key ( Id_producto) references UBUNTEAM_THE_SQL.Dimension_Producto(id),
-		constraint FK_Tiempo foreign key ( Id_tiempo) references UBUNTEAM_THE_SQL.Dimension_Tiempo(id),
-		constraint FK_Compra_MedioDePago foreign key ( Id_medio_pago) references UBUNTEAM_THE_SQL.Dimension_MedioDePago(Id);
+		constraint PK_BI_Compra primary key (Id),
+		constraint UC_BI_Compra_Numero unique (compra_numero),
+		constraint FK_BI_Proveedor foreign key ( Id_proveedor) references UBUNTEAM_THE_SQL.Dimension_Proveedor(id),
+		constraint FK_BI_Producto_Compra foreign key ( id_producto) references UBUNTEAM_THE_SQL.Dimension_Producto(Id),
+		constraint FK_BI_Tiempo foreign key ( id_tiempo) references UBUNTEAM_THE_SQL.Dimension_Tiempo(Id),
+		constraint FK_BI_Compra_MedioDePago foreign key ( Id_medio_pago) references UBUNTEAM_THE_SQL.Dimension_MedioDePago(Id);
 
 
 	
@@ -412,7 +478,7 @@ go
 
 	alter table  UBUNTEAM_THE_SQL.Dimension_TipoDescuento  
 	add 
-		constraint PK_Tipo_Descuento primary key (Id);
+		constraint PK_BI_Tipo_Descuento primary key (Id);
 
 
 
@@ -533,7 +599,6 @@ as
 	
 go
 
-select * from gd_esquema.Maestra
 
 -- Importe Total Descuentos
 
@@ -698,7 +763,7 @@ create procedure UBUNTEAM_THE_SQL.Migrar_Hechos_Ventas
 as
 begin 
 
-	insert into UBUNTEAM_THE_SQL.Hechos_Ventas(venta_codigo,venta_fecha,Id_cliente,venta_total,Id_canal,Id_medio_de_pago,Id_medio_envio_por_provincia,
+	insert into UBUNTEAM_THE_SQL.Hechos_Ventas(venta_codigo,venta_fecha,Id_cliente,venta_total,Id_canal,Id_medio_de_pago,Id_medio_envio_provincia,
 	id_tiempo,id_producto ,id_tipo_descuento ,venta_envio_precio, venta_canal_costo,venta_medio_de_pago_costo,venta_producto_precio,
 	venta_producto_cantidad,desc_venta_importe)
 
@@ -713,12 +778,12 @@ begin
 		 where MEP.Id_medio_envio =( select MEL.Id_medio_envio from UBUNTEAM_THE_SQL.Venta V2
 											join MedioEnvioPorLocalidad MEL on V2.Id_medio_envio_por_localidad = MEL.Id)),
 
-		(select Id from UBUNTEAM_THE_SQL.Dimension_Producto P
+		(select P.Id from UBUNTEAM_THE_SQL.Dimension_Producto P
 						JOIN UBUNTEAM_THE_SQL.ProductoPorVariante PPV on PPV.producto_codigo = P.Id
 						join UBUNTEAM_THE_SQL.ProductoPorVariantePorVenta PV on PV.Id_prod_var=PPV.Id
 		where V.Id = PV.Id_venta),
 
-		(select Id from UBUNTEAM_THE_SQL.Dimension_Tiempo DT
+		(select DT.Id from UBUNTEAM_THE_SQL.Dimension_Tiempo DT
 		where DT.anio = year(V.venta_fecha) and DT.mes = month(V.venta_fecha)),
 
 		V.venta_envio_precio,V.venta_canal_costo,V.venta_medio_de_pago_costo,(select PV2.precio_venta from UBUNTEAM_THE_SQL.ProductoPorVariantePorVenta PV2
@@ -762,7 +827,7 @@ create procedure UBUNTEAM_THE_SQL.Migrar_Dimension_Proveedores
 as
 begin
 	insert into UBUNTEAM_THE_SQL.Dimension_Proveedor(proveedor_cuit, proveedor_razon_social, proveedor_domicilio,id_provincia, proveedor_mail)
-	select PV.proveedor_cuit,PV.proveedor_domicilio,PV.proveedor_razon_social,PV.proveedor_domicilio,
+	select PV.proveedor_cuit,PV.proveedor_razon_social,PV.proveedor_domicilio,
 	(select P.Id from UBUNTEAM_THE_SQL.Localidad L
 	join UBUNTEAM_THE_SQL.Provincia P on P.Id = L.Id_provincia
 	where PV.id_localidad= L.Id	),
