@@ -508,9 +508,7 @@ as
 	join UBUNTEAM_THE_SQL.Dimension_MedioDePago DM on DM.Id = HV.Id_medio_de_pago
 	join UBUNTEAM_THE_SQL.Hechos_Compras HC on HC.Id_medio_pago = HV.Id_medio_de_pago
 
-	group by canal_descripcion
-
-	order by DT.mes desc
+	group by canal_descripcion,HV.venta_total,HC.compra_total,DM.medio_costo_transaccion
 
 
 go
@@ -539,7 +537,6 @@ as
 	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT2 on DT2.Id = HC.id_tiempo
 
 	group by  DP.prod_codigo,DP.prod_descripcion, DT1.anio,DT1.mes,DT2.anio,DT2.mes
-	order by sum(HV.venta_producto_precio * HV.venta_producto_cantidad),sum(HC.compra_producto_precio * HC.compra_producto_cantidad) desc
 go
 
 
@@ -566,7 +563,6 @@ as
 
 
 	group by  DC.categoria_descripcion,DCL.clie_edad,DT.mes
-	order by sum( HV.venta_producto_cantidad) desc
 
 
 
@@ -594,8 +590,8 @@ as
 
 
 	where DTS.concepto_descripcion != 'Otros'
-	group by  DM.medio_pago_descripcion,DT.mes
-	order by HV.venta_total desc
+	group by  DM.medio_pago_descripcion,DT.mes,DTS.concepto_descripcion,HV.venta_total,HV.venta_medio_de_pago_costo,
+			  HV.desc_venta_importe
 	
 go
 
@@ -763,13 +759,13 @@ create procedure UBUNTEAM_THE_SQL.Migrar_Hechos_Ventas
 as
 begin 
 
-	insert into UBUNTEAM_THE_SQL.Hechos_Ventas(venta_codigo,venta_fecha,Id_cliente,venta_total,Id_canal,Id_medio_de_pago,Id_medio_envio_provincia,
-	id_tiempo,id_producto ,id_tipo_descuento ,venta_envio_precio, venta_canal_costo,venta_medio_de_pago_costo,venta_producto_precio,
+	insert into UBUNTEAM_THE_SQL.Hechos_Ventas(Id_cliente,Id_canal,Id_medio_de_pago,Id_medio_envio_provincia,
+	id_tiempo,id_producto ,id_tipo_descuento,venta_codigo,venta_fecha,venta_total,venta_envio_precio, venta_canal_costo,venta_medio_de_pago_costo,venta_producto_precio,
 	venta_producto_cantidad,desc_venta_importe)
 
-	select V.venta_codigo,V.venta_fecha,(select C.Id from UBUNTEAM_THE_SQL.Dimension_Cliente C
-										 where V.Id_cliente = C.Id),V.venta_fecha,
-		V.venta_total,(select Id from UBUNTEAM_THE_SQL.Dimension_Canal CA
+	select (select C.Id from UBUNTEAM_THE_SQL.Dimension_Cliente C
+										 where V.Id_cliente = C.Id),
+		(select Id from UBUNTEAM_THE_SQL.Dimension_Canal CA
 					   where CA.Id = V.Id_canal),
 		(select Id from UBUNTEAM_THE_SQL.Dimension_MedioDePago MP
 		 where MP.Id = V.Id_medio_de_pago ),
@@ -785,6 +781,14 @@ begin
 
 		(select DT.Id from UBUNTEAM_THE_SQL.Dimension_Tiempo DT
 		where DT.anio = year(V.venta_fecha) and DT.mes = month(V.venta_fecha)),
+		
+		(select TD.Id from UBUNTEAM_THE_SQL.DescuentoPorVenta DPV
+					  join  UBUNTEAM_THE_SQL.TipoDescuento TD on DPV.Id_tipo_descuento = TD.Id
+					  
+		where DPV.Id_venta = V.Id			   	
+		),
+		
+		V.venta_codigo,V.venta_fecha,V.venta_total,
 
 		V.venta_envio_precio,V.venta_canal_costo,V.venta_medio_de_pago_costo,(select PV2.precio_venta from UBUNTEAM_THE_SQL.ProductoPorVariantePorVenta PV2
 																			  where PV2.Id_venta = V.Id),
