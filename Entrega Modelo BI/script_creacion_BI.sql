@@ -435,6 +435,19 @@ go
 		constraint FK_BI_Categoria foreign key ( Id_categoria) references UBUNTEAM_THE_SQL.Dimension_Categoria(Id);
 
 
+--Tiempo
+
+	alter table  UBUNTEAM_THE_SQL.Dimension_Tiempo 
+	add 
+		constraint PK_BI_Tiempo primary key (Id);
+
+
+--Tipo Descuento
+
+	alter table  UBUNTEAM_THE_SQL.Dimension_TipoDescuento  
+	add 
+		constraint PK_BI_Tipo_Descuento primary key (Id);
+
 
 --Venta
 
@@ -446,9 +459,9 @@ go
 		constraint FK_BI_Venta_Canal foreign key ( Id_canal) references UBUNTEAM_THE_SQL.Dimension_Canal(Id),
 		constraint FK_BI_Venta_MedioDePago foreign key ( Id_medio_de_pago) references UBUNTEAM_THE_SQL.Dimension_MedioDePago(Id),
 		constraint FK_BI_Venta_Medio_Envio_Por_Provincia foreign key ( Id_medio_envio_provincia) references UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorProvincia(Id),
-		constraint FK_BI_Tiempo foreign key ( id_tiempo) references UBUNTEAM_THE_SQL.Dimension_Tiempo(Id),
+		constraint FK_BI_Tiempo_Venta foreign key ( id_tiempo) references UBUNTEAM_THE_SQL.Dimension_Tiempo(Id),
 		constraint FK_BI_Producto_Venta foreign key ( id_producto) references UBUNTEAM_THE_SQL.Dimension_Producto(Id),
-		constraint FK_BI_Tipo_Descuento foreign key ( Id_tipo_descuento) references UBUNTEAM_THE_SQL.Dimension_Tipo_Descuento(id)
+		constraint FK_BI_Tipo_Descuento foreign key ( Id_tipo_descuento) references UBUNTEAM_THE_SQL.Dimension_TipoDescuento(id)
 
 
 
@@ -469,16 +482,11 @@ go
 		constraint UC_BI_Compra_Numero unique (compra_numero),
 		constraint FK_BI_Proveedor foreign key ( Id_proveedor) references UBUNTEAM_THE_SQL.Dimension_Proveedor(id),
 		constraint FK_BI_Producto_Compra foreign key ( id_producto) references UBUNTEAM_THE_SQL.Dimension_Producto(Id),
-		constraint FK_BI_Tiempo foreign key ( id_tiempo) references UBUNTEAM_THE_SQL.Dimension_Tiempo(Id),
+		constraint FK_BI_Tiempo_Compra foreign key ( id_tiempo) references UBUNTEAM_THE_SQL.Dimension_Tiempo(Id),
 		constraint FK_BI_Compra_MedioDePago foreign key ( Id_medio_pago) references UBUNTEAM_THE_SQL.Dimension_MedioDePago(Id);
 
 
 	
---TipooDescuento
-
-	alter table  UBUNTEAM_THE_SQL.Dimension_TipoDescuento  
-	add 
-		constraint PK_BI_Tipo_Descuento primary key (Id);
 
 
 
@@ -686,7 +694,7 @@ as
 begin 
 	insert into UBUNTEAM_THE_SQL.Dimension_MedioDePago(medio_pago_descripcion,medio_costo_transaccion)
 	select medio_pago_descripcion,medio_costo_transaccion
-	from UBUNTEAM_THE_SQL.Dimension_MedioDePago
+	from UBUNTEAM_THE_SQL.MedioDePago
 end
 go
 
