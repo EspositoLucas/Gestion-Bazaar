@@ -175,17 +175,18 @@ PRINT '**** Vistas BI dropeadas correctamente ****';
 GO
 /********* Drop de Schema *********/
 
-
+/*
 if exists (select name from sys.schemas where name = 'UBUNTEAM_THE_SQL')
 	drop schema UBUNTEAM_THE_SQL;
 go
-
+*/
 
 /********* Creacion de Schema *********/
+/*
 create schema UBUNTEAM_THE_SQL;
 go
 
-
+*/
 /********* Creacion de Tablas *********/
 
 
