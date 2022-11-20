@@ -239,7 +239,7 @@ create table UBUNTEAM_THE_SQL.Hechos_Ventas(
 	Id_medio_envio_provincia int NOT NULL,
 	id_tiempo int NOT NULL,
 	id_producto int NOT NULL,
-	id_tipo_descuento int NOT NULL,
+	id_tipo_descuento int,
 	venta_codigo decimal(19,0) NOT NULL,
 	venta_fecha date ,
 	venta_total decimal(18,2) ,
@@ -744,20 +744,16 @@ as
 begin 
 
 	insert into UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorProvincia(Id_medio_envio,Id_provincia,medio_envio_precio)
-	select MEL.Id_medio_envio,(select P.Id from UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad MEL2
-																										join UBUNTEAM_THE_SQL.Localidad L on L.Id = MEL2.Id_localidad
-																										join UBUNTEAM_THE_SQL.Provincia P on P.Id = L.Id_provincia
-																										
-																				where MEL.Id_medio_envio = MEL2.Id_medio_envio	)
-			,MEL.medio_envio_precio
+		select MEL.Id_medio_envio,
+		(select L.Id_provincia
+		from UBUNTEAM_THE_SQL.Localidad L															
+		where MEL.Id_localidad = L.Id),
+		MEL.medio_envio_precio
 
-
-		from UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad MEL
+	from UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad MEL
 
 end
 go
-
-
 
 
 --Venta
@@ -773,46 +769,51 @@ begin
 
 	select (select C.Id from UBUNTEAM_THE_SQL.Dimension_Cliente C
 										 where V.Id_cliente = C.Id),
+										 
 		(select Id from UBUNTEAM_THE_SQL.Dimension_Canal CA
-					   where CA.Id = V.Id_canal),
-		(select Id from UBUNTEAM_THE_SQL.Dimension_MedioDePago MP
+		 where CA.Id = V.Id_canal),
+		 (select Id from UBUNTEAM_THE_SQL.Dimension_MedioDePago MP
 		 where MP.Id = V.Id_medio_de_pago ),
+		 
+		(select top 1 MEP.Id from UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorProvincia MEP
 
-		(select Id from UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorProvincia MEP
-		 where MEP.Id_medio_envio =( select MEL.Id_medio_envio from UBUNTEAM_THE_SQL.Venta V2
-											join MedioEnvioPorLocalidad MEL on V2.Id_medio_envio_por_localidad = MEL.Id)),
+		 where MEP.Id_medio_envio = (select MEL.Id_medio_envio from UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad MEL where MEL.Id = V.Id_medio_envio_por_localidad)
 
-		(select P.Id from UBUNTEAM_THE_SQL.Dimension_Producto P
-						JOIN UBUNTEAM_THE_SQL.ProductoPorVariante PPV on PPV.producto_codigo = P.Id
-						join UBUNTEAM_THE_SQL.ProductoPorVariantePorVenta PV on PV.Id_prod_var=PPV.Id
-		where V.Id = PV.Id_venta),
+				and MEP.Id_provincia = (select Loc.Id_provincia from UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad MEL2
+											join UBUNTEAM_THE_SQL.Localidad Loc on Loc.Id = MEL2.Id_localidad
+										where MEL2.Id = V.Id_medio_envio_por_localidad)			
+		),
 
 		(select DT.Id from UBUNTEAM_THE_SQL.Dimension_Tiempo DT
-		where DT.anio = year(V.venta_fecha) and DT.mes = month(V.venta_fecha)),
+			where DT.anio = year(V.venta_fecha) and DT.mes = month(V.venta_fecha)),
 		
-		(select TD.Id from UBUNTEAM_THE_SQL.DescuentoPorVenta DPV
+
+		(select top 1 P.Id from UBUNTEAM_THE_SQL.Dimension_Producto P
+						join UBUNTEAM_THE_SQL.ProductoPorVariante PPV on PPV.producto_codigo = P.prod_codigo
+						join UBUNTEAM_THE_SQL.ProductoPorVariantePorVenta PV on PV.Id_prod_var=PPV.Id
+				where V.Id = PV.Id_venta),
+		
+		(select top 1 TD.Id from UBUNTEAM_THE_SQL.DescuentoPorVenta DPV
 					  join  UBUNTEAM_THE_SQL.TipoDescuento TD on DPV.Id_tipo_descuento = TD.Id
 					  
-		where DPV.Id_venta = V.Id			   	
+					where DPV.Id_venta = V.Id			   	
 		),
-		
+	
 		V.venta_codigo,V.venta_fecha,V.venta_total,
 
-		V.venta_envio_precio,V.venta_canal_costo,V.venta_medio_de_pago_costo,(select PV2.precio_venta from UBUNTEAM_THE_SQL.ProductoPorVariantePorVenta PV2
+		V.venta_envio_precio,V.venta_canal_costo,V.venta_medio_de_pago_costo,
+		
+		(select top 1 PV2.precio_venta from UBUNTEAM_THE_SQL.ProductoPorVariantePorVenta PV2
 																			  where PV2.Id_venta = V.Id),
 
-		(select PV.prod_var_cantidad_venta from UBUNTEAM_THE_SQL.ProductoPorVariantePorVenta PV
+		(select top 1 PV.prod_var_cantidad_venta from UBUNTEAM_THE_SQL.ProductoPorVariantePorVenta PV
 																			  where PV.Id_venta = V.Id),
-
-		(select DV.desc_venta_importe from UBUNTEAM_THE_SQL.DescuentoPorVenta DV
+		(select top 1 DV.desc_venta_importe from UBUNTEAM_THE_SQL.DescuentoPorVenta DV
 		where DV.Id_venta = V.Id)
 		
 	from UBUNTEAM_THE_SQL.Venta V
 end
 go
-
-
-
 
 
 --Producto
@@ -884,36 +885,35 @@ create procedure UBUNTEAM_THE_SQL.Migrar_Hechos_Compras
  compra_numero, compra_fecha, compra_total ,compra_producto_precio,compra_producto_cantidad ,desc_compra_valor)
 
  select (select PV.Id from UBUNTEAM_THE_SQL.Dimension_Proveedor PV
-		where C.Id_proveedor = PV.Id),
+		 where C.Id_proveedor = PV.Id),
 		
-		(select P.Id from UBUNTEAM_THE_SQL.Dimension_Producto P
-						JOIN UBUNTEAM_THE_SQL.ProductoPorVariante PPV on PPV.producto_codigo = P.Id
-						join UBUNTEAM_THE_SQL.ProductoPorVariantePorVenta PV on PV.Id_prod_var=PPV.Id
-		where C.Id = PV.Id_venta),
- 
-	(select Id from UBUNTEAM_THE_SQL.Dimension_Tiempo DT
-		where DT.anio = year(C.compra_fecha) and DT.mes = month(C.compra_fecha)),
-
-	(select Id from UBUNTEAM_THE_SQL.Dimension_MedioDePago MP
-		 where MP.Id = C.Id_medio_pago) ,
+		(select top 1 P.Id from UBUNTEAM_THE_SQL.Dimension_Producto P
+						join UBUNTEAM_THE_SQL.ProductoPorVariante PPV on PPV.producto_codigo = P.prod_codigo
+						join UBUNTEAM_THE_SQL.ProductoPorVariantePorCompra PVC on PVC.Id_prod_var = PPV.Id
+		 where C.Id = PVC.Id_compra
+		),
+		
 	
+ 		(select Id from UBUNTEAM_THE_SQL.Dimension_Tiempo DT
+		 where DT.anio = year(C.compra_fecha) and DT.mes = month(C.compra_fecha)),
+		 
+		(select Id from UBUNTEAM_THE_SQL.Dimension_MedioDePago MP
+		 where MP.Id = C.Id_medio_pago), 
+	
+
  C.compra_numero,C.compra_fecha,C.compra_total,
+ 
+(select top 1 PC.precio_compra from UBUNTEAM_THE_SQL.ProductoPorVariantePorCompra PC where PC.Id_compra = C.Id),
+ 
+(select top 1 PC2.prod_var_cantidad_compra from UBUNTEAM_THE_SQL.ProductoPorVariantePorCompra PC2 where PC2.Id_compra = C.Id),
 
- (select PC.precio_compra from UBUNTEAM_THE_SQL.ProductoPorVariantePorCompra PC
-																			  where PC.Id_compra = C.Id),
-
-	(select PC2.prod_var_cantidad_compra from UBUNTEAM_THE_SQL.ProductoPorVariantePorCompra PC2
-																			  where PC2.Id_compra = C.Id),
-
-	(select DC.desc_compra_valor from UBUNTEAM_THE_SQL.DescuentoPorCompra DC
+(select DC.desc_compra_valor from UBUNTEAM_THE_SQL.DescuentoPorCompra DC
 		where DC.Id_compra = C.Id)
 	
  from UBUNTEAM_THE_SQL.Compra C
 		
 end
 go 
-
-
 
 --TipoDescuento
 
@@ -957,15 +957,20 @@ go
 
 	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_Productos ;
 	print '**** Migracion de Dimension_Productos Exitosa****';
-	--EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_MediosEnvioPorProvincia;
+	
+	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_MediosEnvioPorProvincia;
 	print '**** Migracion de Dimension_Medios de Envio por Provincia Exitosa****';
-	--EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_Proveedores ;
+	
+	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_Proveedores ;
 	print '**** Migracion de Dimension_Proveedores Exitosa****';
-	--EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_Clientes;
+	
+	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_Clientes;
 	print '**** Migracion de Dimension_Clientes Exitosa****';
-	--EXECUTE UBUNTEAM_THE_SQL.Migrar_Hechos_Compras;
+	
+	EXECUTE UBUNTEAM_THE_SQL.Migrar_Hechos_Compras;
 	print '**** Migracion de Hechos_Compras Exitosa****';
-	--EXECUTE UBUNTEAM_THE_SQL.Migrar_Hechos_Ventas;
+	
+	EXECUTE UBUNTEAM_THE_SQL.Migrar_Hechos_Ventas;
 	print '**** Migracion de Hechos_Ventas Exitosa****';
 
 	--Tablas con FKs a tablas que no tienen FKs (van ahora porque ya se migraron las tablas sin FKs, que son de las que dependen estas tablas)
@@ -1000,4 +1005,15 @@ IF (
 
 */
 
+/*
+select * from UBUNTEAM_THE_SQL.Hechos_Compras
 
+select * from UBUNTEAM_THE_SQL.Hechos_Ventas
+
+
+select * from UBUNTEAM_THE_SQL.ProductoPorVariantePorVenta
+
+select * from UBUNTEAM_THE_SQL.ProductoPorVariantePorCompra
+
+select * from UBUNTEAM_THE_SQL.Venta
+*/

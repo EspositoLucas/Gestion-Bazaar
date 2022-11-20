@@ -892,12 +892,15 @@ go
 create procedure UBUNTEAM_THE_SQL.Migrar_ProductosPorVariantePorCompra
 as
 begin
-	insert into UBUNTEAM_THE_SQL.ProductoPorVariantePorCompra(Id_prod_var,Id_compra)
+	insert into UBUNTEAM_THE_SQL.ProductoPorVariantePorCompra(Id_prod_var,Id_compra, precio_compra, prod_var_cantidad_compra)
 		select distinct (select top 1 Id from UBUNTEAM_THE_SQL.ProductoPorVariante where producto_codigo= M.PRODUCTO_CODIGO 
 		
 		and variante_codigo = M.PRODUCTO_VARIANTE_CODIGO ), 
 		
-		(select top 1 Id from UBUNTEAM_THE_SQL.Compra where compra_numero = M.COMPRA_NUMERO )
+		(select top 1 Id from UBUNTEAM_THE_SQL.Compra where compra_numero = M.COMPRA_NUMERO ),
+
+		M.COMPRA_PRODUCTO_PRECIO, 
+		M.COMPRA_PRODUCTO_CANTIDAD
 
 		from gd_esquema.Maestra M
 
@@ -912,12 +915,14 @@ go
 create procedure UBUNTEAM_THE_SQL.Migrar_ProductosPorVariantePorVenta
 as
 begin
-	insert into UBUNTEAM_THE_SQL.ProductoPorVariantePorVenta(Id_prod_var,Id_venta)
+	insert into UBUNTEAM_THE_SQL.ProductoPorVariantePorVenta(Id_prod_var,Id_venta, precio_venta ,prod_var_cantidad_venta)
 		select distinct (select top 1 Id from UBUNTEAM_THE_SQL.ProductoPorVariante where producto_codigo= M.PRODUCTO_CODIGO 
 		
 		and variante_codigo = M.PRODUCTO_VARIANTE_CODIGO ), 
 
-		(select top 1 Id from UBUNTEAM_THE_SQL.Venta where venta_codigo = VENTA_CODIGO )
+		(select top 1 Id from UBUNTEAM_THE_SQL.Venta where venta_codigo = M.VENTA_CODIGO ),
+
+		M.VENTA_PRODUCTO_PRECIO, M.VENTA_PRODUCTO_CANTIDAD
 
 		from gd_esquema.Maestra M
 
