@@ -785,12 +785,12 @@ create procedure UBUNTEAM_THE_SQL.Migrar_MediosDeEnvioPorLocalidad
 as
 begin 
 
-	insert into UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad(Id_medio_envio,Id_localidad)
+	insert into UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad(Id_medio_envio,Id_localidad, medio_envio_precio)
 	select distinct  (select top 1 Id from UBUNTEAM_THE_SQL.MedioEnvio where medio_descripcion = M.VENTA_MEDIO_ENVIO ),
 	
 	(select top 1 Id from UBUNTEAM_THE_SQL.Localidad where loc_cod_postal_codigo = 	M.CLIENTE_CODIGO_POSTAL 
-														   and loc_descripcion = M.CLIENTE_LOCALIDAD  and Id_provincia = (select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.CLIENTE_PROVINCIA ) )
-
+														   and loc_descripcion = M.CLIENTE_LOCALIDAD  and Id_provincia = (select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.CLIENTE_PROVINCIA ) ),
+	M.VENTA_ENVIO_PRECIO
 
 	from gd_esquema.Maestra as M
 

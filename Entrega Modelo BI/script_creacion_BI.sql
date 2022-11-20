@@ -508,7 +508,7 @@ as
 			HV.venta_total,
 			HC.compra_total,
 			DM.medio_costo_transaccion,
-			(HV.venta_total - HC.compra_total -DM.medio_costo_transaccion) total_venta
+			(HV.venta_total - HC.compra_total - DM.medio_costo_transaccion) total_venta
 			
 
 	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
@@ -523,6 +523,7 @@ as
 go
 
 
+
 --Productos Con Mayor Rentabilidad
 
 create view UBUNTEAM_THE_SQL.v_BI_Productos_Con_Mayor_Rentabilidad
@@ -533,11 +534,7 @@ as
 				 (str(DT1.anio) + str(DT1.mes)) periodo_venta ,
 				 (str(DT2.anio) + str(DT2.mes)) periodo_compra,
 				( 100 * (sum(HV.venta_producto_precio * HV.venta_producto_cantidad) - sum(HC.compra_producto_precio * HC.compra_producto_cantidad))
-				/ sum(HV.venta_producto_precio * HV.venta_producto_cantidad) + sum (HC.compra_producto_precio * HC.compra_producto_cantidad)) rentabilidad
-
-
-				
-			
+				/ (sum(HV.venta_producto_precio * HV.venta_producto_cantidad) + sum (HC.compra_producto_precio * HC.compra_producto_cantidad))) rentabilidad
 
 	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
 	join UBUNTEAM_THE_SQL.Dimension_Producto DP on  HV.id_producto = DP.Id
@@ -546,9 +543,8 @@ as
 	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT2 on DT2.Id = HC.id_tiempo
 
 	group by  DP.prod_codigo,DP.prod_descripcion, DT1.anio,DT1.mes,DT2.anio,DT2.mes
+	order by rentabilidad desc
 go
-
-
 
 --Categorias mas vendidas
 
@@ -572,14 +568,9 @@ as
 
 
 	group by  DC.categoria_descripcion,DCL.clie_edad,DT.mes
-
-
-
-
-
+	order by cant_total_vendida desc
 
 go
-
 
 --Ingresos por Medio de Pago
 
@@ -588,22 +579,20 @@ as
 	select DM.medio_pago_descripcion,
 				 DT.mes,
 				 DTS.concepto_descripcion,
-				 (HV.venta_total - HV.venta_medio_de_pago_costo -HV.desc_venta_importe) ingreso_total
+				 sum(HV.venta_total - HV.venta_medio_de_pago_costo -HV.desc_venta_importe) ingreso_total
 		
 			
 
 	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
 	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on DT.Id = HV.id_tiempo
 	join UBUNTEAM_THE_SQL.Dimension_MedioDePago DM on DM.Id = HV.Id_medio_de_pago
-	join UBUNTEAM_THE_SQL.Dimension_TipoDescuento DTS on DTS.Id = HV.Id
+	join UBUNTEAM_THE_SQL.Dimension_TipoDescuento DTS on DTS.Id = HV.id_tipo_descuento
 
 
-	where DTS.concepto_descripcion != 'Otros'
-	group by  DM.medio_pago_descripcion,DT.mes,DTS.concepto_descripcion,HV.venta_total,HV.venta_medio_de_pago_costo,
-			  HV.desc_venta_importe
+	where DTS.concepto_descripcion = DM.medio_pago_descripcion and DTS.concepto_descripcion != 'Otros'
+	group by  DM.medio_pago_descripcion,DT.mes,DTS.concepto_descripcion
 	
 go
-
 
 -- Importe Total Descuentos
 
@@ -617,28 +606,22 @@ go
 
 -- Valor Promedio Envio por Provincia
 
-/*
+
 create view UBUNTEAM_THE_SQL.v_BI_Valor_Promedio_Envio_Por_Provincia
 as
 	
 	select DMP.Id_medio_envio,
-				
+				DT.anio,
 				DMP.Id_provincia,
-
-				avg(DMP.medio_envio_precio)
-
-				
-			
+				avg(DMP.medio_envio_precio) as promedio_envio_provincia		
 
 	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
 	join UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorProvincia DMP on HV.Id_medio_envio_provincia = DMP.id
+	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on DT.Id = HV.id_tiempo 
 
-	group by  DMP.Id_medio_envio,DMP.Id_provincia
+	group by  DMP.Id_medio_envio,DMP.Id_provincia, DT.anio
 
 go
-
-*/
-
 
 PRINT '**** Vistas BI creadas correctamente ****';
 
