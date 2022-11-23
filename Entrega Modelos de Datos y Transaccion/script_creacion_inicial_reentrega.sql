@@ -692,11 +692,21 @@ create procedure UBUNTEAM_THE_SQL.Migrar_MediosDePago
 as
 begin 
 	insert into UBUNTEAM_THE_SQL.MedioDePago(medio_pago_descripcion,medio_costo_transaccion)
+
 	select distinct M.VENTA_MEDIO_PAGO,M.VENTA_MEDIO_PAGO_COSTO
 	from gd_esquema.Maestra as M
-	where M.VENTA_MEDIO_PAGO is not null
+	where M.VENTA_MEDIO_PAGO is not null 
+
+	union
+
+	select distinct M.COMPRA_MEDIO_PAGO,null
+	from gd_esquema.Maestra as M
+	where M.COMPRA_MEDIO_PAGO is not null 
+
 end
 go
+
+select * from UBUNTEAM_THE_SQL.MedioDePago
 
 --Provincia
 

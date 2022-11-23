@@ -629,6 +629,27 @@ PRINT '**** Vistas BI creadas correctamente ****';
 GO
 
 
+--Aumento promedio de Precios
+
+create view UBUNTEAM_THE_SQL.v_BI_Aumento_Promedio_De_Precios
+as
+	
+	select PV.Id,
+				DT.anio,
+				(max(HC.compra_total)-min(HC.compra_total)/	min(HC.compra_total))aumento_promedio
+
+	from UBUNTEAM_THE_SQL.Hechos_Compras HC
+	join UBUNTEAM_THE_SQL.Dimension_Proveedor PV on HC.Id_proveedor = PV.Id
+	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on DT.Id = HC.id_tiempo 
+
+	group by  PV.Id, DT.anio
+
+go
+
+PRINT '**** Vistas BI creadas correctamente ****';
+
+GO
+
 
 /********* Creacion de StoredProcedures para migracion *********/
 
