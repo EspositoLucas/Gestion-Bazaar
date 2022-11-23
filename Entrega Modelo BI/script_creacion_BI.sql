@@ -249,7 +249,8 @@ create table UBUNTEAM_THE_SQL.Hechos_Ventas(
 	venta_medio_de_pago_costo decimal(18,2),
 	venta_producto_precio decimal(18,2),
 	venta_producto_cantidad decimal(12,2),
-	desc_venta_importe decimal(18,2)
+	desc_venta_importe decimal(18,2),
+	desc_venta_cupon_importe decimal(18,2)
 
 	 
 
@@ -749,7 +750,7 @@ begin
 
 	insert into UBUNTEAM_THE_SQL.Hechos_Ventas(Id_cliente,Id_canal,Id_medio_de_pago,Id_medio_envio_provincia,
 	id_tiempo,id_producto ,id_tipo_descuento,venta_codigo,venta_fecha,venta_total,venta_envio_precio, venta_canal_costo,venta_medio_de_pago_costo,venta_producto_precio,
-	venta_producto_cantidad,desc_venta_importe)
+	venta_producto_cantidad,desc_venta_importe,desc_venta_cupon_importe)
 
 	select (select C.Id from UBUNTEAM_THE_SQL.Dimension_Cliente C
 										 where V.Id_cliente = C.Id),
@@ -793,7 +794,10 @@ begin
 		(select top 1 PV.prod_var_cantidad_venta from UBUNTEAM_THE_SQL.ProductoPorVariantePorVenta PV
 																			  where PV.Id_venta = V.Id),
 		(select top 1 DV.desc_venta_importe from UBUNTEAM_THE_SQL.DescuentoPorVenta DV
-		where DV.Id_venta = V.Id)
+		where DV.Id_venta = V.Id),
+
+		(select top 1 VC.venta_cupon_importe from UBUNTEAM_THE_SQL.VentaPorCupon VC
+		where VC.Id_cupon = V.Id)
 		
 	from UBUNTEAM_THE_SQL.Venta V
 end
