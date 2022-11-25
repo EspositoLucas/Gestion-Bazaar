@@ -605,6 +605,23 @@ go
 
 */
 
+-- Porcentaje de envios a cada prov por mes
+
+create view UBUNTEAM_THE_SQL.v_BI_Porcentaje_Envios_Por_Provincia
+as
+	select distinct month(HV.venta_fecha) as mes, P.prov_descripcion as provincia,
+				count(HV.Id_medio_envio_provincia) * 100 / 
+					(select count(HV2.Id_medio_envio_provincia) 
+					 from UBUNTEAM_THE_SQL.Hechos_Ventas HV2
+					 where month(HV2.venta_fecha) = month(HV.venta_fecha)
+					 group by month(HV2.venta_fecha)) as porcentaje_envios
+	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
+	join UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorProvincia MEP on MEP.Id = HV.Id_medio_envio_provincia
+	join UBUNTEAM_THE_SQL.Dimension_Provincia P on MEP.Id_provincia = P.Id
+	group by month(HV.venta_fecha), P.prov_descripcion
+	order by Mes, Provincia asc
+go
+
 -- Valor Promedio Envio por Provincia
 
 
