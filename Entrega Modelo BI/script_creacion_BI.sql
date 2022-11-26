@@ -610,11 +610,11 @@ go
 create view UBUNTEAM_THE_SQL.v_BI_Porcentaje_Envios_Por_Provincia
 as
 	select distinct month(HV.venta_fecha) as mes, P.prov_descripcion as provincia,
-				count(HV.Id_medio_envio_provincia) * 100 / 
+					format(round(cast(count(HV.Id_medio_envio_provincia) as decimal(7,2)) * 100 / 
 					(select count(HV2.Id_medio_envio_provincia) 
 					 from UBUNTEAM_THE_SQL.Hechos_Ventas HV2
 					 where month(HV2.venta_fecha) = month(HV.venta_fecha)
-					 group by month(HV2.venta_fecha)) as porcentaje_envios
+					 group by month(HV2.venta_fecha)), 2), 'N2') as porcentaje_envios_del_mes
 	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
 	join UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorProvincia MEP on MEP.Id = HV.Id_medio_envio_provincia
 	join UBUNTEAM_THE_SQL.Dimension_Provincia P on MEP.Id_provincia = P.Id
