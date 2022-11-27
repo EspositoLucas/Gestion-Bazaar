@@ -706,7 +706,6 @@ begin
 end
 go
 
-select * from UBUNTEAM_THE_SQL.MedioDePago
 
 --Provincia
 
