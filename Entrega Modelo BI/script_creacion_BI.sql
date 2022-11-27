@@ -605,13 +605,18 @@ go
 
 -- Importe Total Descuentos
 
-/*
 create view UBUNTEAM_THE_SQL.v_BI_Importe_Total_Descuentos
 as
-	
-go
+	select V.Id_canal,month(V.venta_fecha) mes,coalesce(sum(V.desc_venta_importe),0) 'Descuentos por Medio de Pago',coalesce(sum(V.desc_venta_cupon_importe),0) 'Descuentos por Cupones' ,
+		/*'Todavia no se' 'Descuentos por Envios Gratis' ,*/
+		coalesce(sum(V.desc_venta_importe),0)+coalesce(sum(V.desc_venta_cupon_importe),0) 'Total Descuentos'
+	from UBUNTEAM_THE_SQL.Dimension_TipoDescuento D
+	join UBUNTEAM_THE_SQL.Hechos_Ventas V on (V.id_tipo_descuento=D.Id)
+	where V.desc_venta_importe is not null or V.desc_venta_cupon_importe is not null
+	group by month(V.venta_fecha),V.Id_canal
 
-*/
+
+go
 
 -- Porcentaje de envios a cada prov por mes
 
