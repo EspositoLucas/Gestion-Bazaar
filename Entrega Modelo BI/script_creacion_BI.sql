@@ -168,6 +168,14 @@ IF EXISTS (SELECT name FROM sys.objects WHERE name = 'v_BI_Importe_Total_Descuen
 IF EXISTS (SELECT name FROM sys.objects WHERE name = 'v_BI_Valor_Promedio_Envio_Por_Provincia')
 	DROP VIEW UBUNTEAM_THE_SQL.v_BI_Valor_Promedio_Envio_Por_Provincia;
 
+IF EXISTS (SELECT name FROM sys.objects WHERE name = 'v_BI_Aumento_Promedio_De_Precios')
+	DROP VIEW UBUNTEAM_THE_SQL.v_BI_Aumento_Promedio_De_Precios;
+
+IF EXISTS (SELECT name FROM sys.objects WHERE name = 'v_BI_Productos_Con_Mayor_Reposicion')
+	DROP VIEW UBUNTEAM_THE_SQL.v_BI_Productos_Con_Mayor_Reposicion;
+
+IF EXISTS (SELECT name FROM sys.objects WHERE name = 'v_BI_Porcentaje_Envios_Por_Provincia')
+	DROP VIEW UBUNTEAM_THE_SQL.v_BI_Porcentaje_Envios_Por_Provincia;
 
 
 PRINT '**** Vistas BI dropeadas correctamente ****';
@@ -609,7 +617,8 @@ go
 
 create view UBUNTEAM_THE_SQL.v_BI_Porcentaje_Envios_Por_Provincia
 as
-	select distinct month(HV.venta_fecha) as mes, P.prov_descripcion as provincia,
+	select distinct month(HV.venta_fecha) as mes, 
+					P.prov_descripcion as provincia,
 					format(round(cast(count(HV.Id_medio_envio_provincia) as decimal(7,2)) * 100 / 
 					(select count(HV2.Id_medio_envio_provincia) 
 					 from UBUNTEAM_THE_SQL.Hechos_Ventas HV2
@@ -619,7 +628,6 @@ as
 	join UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorProvincia MEP on MEP.Id = HV.Id_medio_envio_provincia
 	join UBUNTEAM_THE_SQL.Dimension_Provincia P on MEP.Id_provincia = P.Id
 	group by month(HV.venta_fecha), P.prov_descripcion
-	order by Mes, Provincia asc
 go
 
 -- Valor Promedio Envio por Provincia
@@ -662,6 +670,26 @@ as
 	group by  PV.Id, DT.anio
 
 go
+
+
+--Productos con Mayor Reposicion
+
+create view UBUNTEAM_THE_SQL.v_BI_Productos_Con_Mayor_Reposicion
+as
+	
+	select top 3 P.Id,
+				 HC.compra_producto_cantidad,
+				 DT.mes
+
+	from UBUNTEAM_THE_SQL.Hechos_Compras HC
+	join UBUNTEAM_THE_SQL.Dimension_Producto P on HC.id_producto = P.Id
+	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on DT.Id = HC.id_tiempo 
+
+	group by  P.Id,HC.compra_producto_cantidad,DT.mes
+	order by sum(HC.compra_producto_cantidad) desc
+
+go
+
 
 PRINT '**** Vistas BI creadas correctamente ****';
 
