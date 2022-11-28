@@ -16,7 +16,7 @@ FROM sys.foreign_keys
 
 EXECUTE sp_executesql @DropConstraints;
 
-PRINT '**** CONSTRAINTs dropeadas correctamente ****';
+PRINT '**** CONSTRAINTs BI dropeadas correctamente ****';
 
 GO
 
@@ -80,6 +80,10 @@ IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Dimension_Tiempo')
 
 IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Hechos_Descuentos')
 	DROP TABLE UBUNTEAM_THE_SQL.Hechos_Descuentos;
+
+PRINT '**** Tablas BI dropeadas correctamente ****';
+
+go
 
 /********* Drop de Stored Procedures *********/
 
@@ -146,7 +150,7 @@ IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Hechos_Descuento
 go
 
 
-PRINT '**** SPs dropeados correctamente ****';
+PRINT '**** SPs BI dropeados correctamente ****';
 
 go
 
@@ -381,7 +385,7 @@ create table UBUNTEAM_THE_SQL.Dimension_Tiempo(
 
 
 
-print '**** Tablas creadas correctamente ****';
+print '**** Tablas BI creadas correctamente ****';
 
 go
 
@@ -514,7 +518,7 @@ go
 
 
 
-print '**** CONSTRAINTs creadas correctamente ****';
+print '**** CONSTRAINTs BI creadas correctamente ****';
 
 go
 
@@ -528,24 +532,30 @@ create view UBUNTEAM_THE_SQL.v_BI_Canal_Ventas_Ganancias_Mensuales
 as
 	
 	select DC.canal_descripcion,
+		   DT.mes,
 			HV.venta_total,
 			HC.compra_total,
 			DM.medio_costo_transaccion,
-			(HV.venta_total - HC.compra_total - DM.medio_costo_transaccion) total_venta
+			(HV.venta_total - HC.compra_total - sum(DM.medio_costo_transaccion)) ganancias
 			
 
 	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
 	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on HV.id_tiempo  = DT.Id
 	join UBUNTEAM_THE_SQL.Dimension_Canal DC on DC.Id = HV.Id_canal 
 	join UBUNTEAM_THE_SQL.Dimension_MedioDePago DM on DM.Id = HV.Id_medio_de_pago
-	join UBUNTEAM_THE_SQL.Hechos_Compras HC on HC.Id_medio_pago = HV.Id_medio_de_pago
+	join UBUNTEAM_THE_SQL.Hechos_Descuentos HD on HD.Id_venta = HV.Id
+	join UBUNTEAM_THE_SQL.Dimension_TipoDescuento DTD on DTD.Id = HD.Id_venta
+	join UBUNTEAM_THE_SQL.Hechos_Compras HC on HC.Id_medio_pago =DM.Id
 
-	group by canal_descripcion,HV.venta_total,HC.compra_total,DM.medio_costo_transaccion
+	where DTD.concepto_descripcion = 'Meido de pago'
+
+	group by canal_descripcion,HV.venta_total,HC.compra_total,DM.medio_costo_transaccion,DT.mes
 
 
 go
 
 
+--select * from UBUNTEAM_THE_SQL.Dimension_MedioDePago
 
 --Productos Con Mayor Rentabilidad
 
@@ -693,10 +703,6 @@ as
 
 go
 
-PRINT '**** Vistas BI creadas correctamente ****';
-
-GO
-
 
 --Aumento promedio de Precios
 
@@ -705,7 +711,7 @@ as
 	
 	select PV.Id proveedor,
 				DT.anio,
-				(max(HC.compra_total)-min(HC.compra_total)/	min(HC.compra_total))aumento_promedio
+				((max(HC.compra_total)-min(HC.compra_total))/	min(HC.compra_total)) * 100 aumento_promedio
 
 	from UBUNTEAM_THE_SQL.Hechos_Compras HC
 	join UBUNTEAM_THE_SQL.Dimension_Proveedor PV on HC.Id_proveedor = PV.Id
@@ -1064,7 +1070,7 @@ go
 
 
 
-print '**** Store Procedures creados correctamente ****';
+print '**** SPs BI creados correctamente ****';
 
 go
 
@@ -1129,29 +1135,9 @@ IF (
 	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Dimension_Provincia)
 	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Hechos_Compras)
 	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Hechos_Ventas)
+	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Hechos_Descuentos)
 	
 )
 
 
 	PRINT 'Tablas BI migradas correctamente.';
-
-
-
-/*
-
-/********* TESTEO *********/
-
-*/
-
-/*
-select * from UBUNTEAM_THE_SQL.Hechos_Compras
-
-select * from UBUNTEAM_THE_SQL.Hechos_Ventas
-
-
-select * from UBUNTEAM_THE_SQL.ProductoPorVariantePorVenta
-
-select * from UBUNTEAM_THE_SQL.ProductoPorVariantePorCompra
-
-select * from UBUNTEAM_THE_SQL.Venta
-*/
