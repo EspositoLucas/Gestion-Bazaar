@@ -1,3 +1,4 @@
+
 use GD2C2022 ;
 
 GO
@@ -74,9 +75,6 @@ IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_MediosDeEnvioPor
 	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_MediosDeEnvioPorLocalidad;
 go
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Envios')
-	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Envios;
-go
 
 IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Ventas')
 	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Ventas;
@@ -141,42 +139,20 @@ PRINT '**** SPs dropeados correctamente ****';
 go
 
 
--- Version DROP de SP del sys
-/*
-DECLARE @sql VARCHAR(MAX)=''
-SELECT @sql+= 'DROP PROCEDURE' + ' UBUNTEAM_THE_SQL. ' + F.NAME + ';' FROM SYS.objects AS F where type='P'
-exec(@sql);
-PRINT '**** SPs dropeados correctamente ****';
-
-GO
-*/
-
-
-Declare @sql NVARCHAR(MAX) = N'';
-
-SELECT @sql = @sql + N' DROP FUNCTION ' 
-                   + QUOTENAME(SCHEMA_NAME(schema_id)) 
-                   + N'.' + QUOTENAME(name)
-FROM sys.objects
-WHERE type_desc LIKE '%FUNCTION%';
-
-Exec sp_executesql @sql
-GO
-
-PRINT '**** Funciones dropeadas correctamente ****';
 
 /********* Drop de Schema *********/
 
-
+/*
 if exists (select name from sys.schemas where name = 'UBUNTEAM_THE_SQL')
 	drop schema UBUNTEAM_THE_SQL;
 go
 
-
+*/
 /********* Creacion de Schema *********/
+/*
 create schema UBUNTEAM_THE_SQL;
 go
-
+*/
 
 /********* Creacion de Tablas *********/
 
@@ -184,7 +160,7 @@ go
 --Cliente
 
 create table UBUNTEAM_THE_SQL.Cliente(
-	Id int identity NOT NULL ,
+	Id int identity  ,
 	clie_nombre nvarchar(255) NOT NULL,
 	clie_dni decimal(18,0) NOT NULL,
 	Id_localidad int NOT NULL,
@@ -201,7 +177,7 @@ create table UBUNTEAM_THE_SQL.Cliente(
 --Localidad 
 
 create table UBUNTEAM_THE_SQL.Localidad(
-	Id int identity NOT NULL,
+	Id int identity ,
 	loc_descripcion nvarchar(255) NOT NULL,
 	Id_provincia int NOT NULL,
 	loc_cod_postal_codigo decimal(18, 0) NOT NULL
@@ -220,7 +196,7 @@ create table UBUNTEAM_THE_SQL.Provincia(
 -- Venta
 
 create table UBUNTEAM_THE_SQL.Venta(
-	Id int identity NOT NULL,	
+	Id int identity ,	
 	venta_codigo decimal(19,0) NOT NULL,
 	venta_fecha date ,
 	Id_cliente int NOT NULL,
@@ -248,7 +224,7 @@ create table UBUNTEAM_THE_SQL.Canal(
 
 create table UBUNTEAM_THE_SQL.MedioDePago(
 	Id int identity,
-	medio_descripcion nvarchar(255) ,
+	medio_pago_descripcion nvarchar(255) ,
 	medio_costo_transaccion decimal(18,2) 
 
 );
@@ -267,7 +243,7 @@ create table UBUNTEAM_THE_SQL.MedioEnvio(
 
 
 create table UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad(
-	Id int identity NOT NULL,
+	Id int identity ,
 	Id_medio_envio int  NOT NULL,
 	Id_localidad int  NOT NULL,
 	medio_envio_precio decimal(18,2),
@@ -319,7 +295,7 @@ create table UBUNTEAM_THE_SQL.TipoVariante(
 );
 
 
---ProductoPorVariante -- sin Id
+--ProductoPorVariante
 
 create table UBUNTEAM_THE_SQL.ProductoPorVariante(
 	Id int identity ,
@@ -382,7 +358,7 @@ create table UBUNTEAM_THE_SQL.DescuentoPorCompra(
 --TipoDescuento
 
 create table UBUNTEAM_THE_SQL.TipoDescuento(
-	Id int identity NOT NULL,
+	Id int identity ,
 	concepto_descripcion nvarchar(255) 
 );
 
@@ -390,7 +366,7 @@ create table UBUNTEAM_THE_SQL.TipoDescuento(
 --Cupon
 
 create table UBUNTEAM_THE_SQL.Cupon(
-	Id int identity NOT NULL,
+	Id int identity ,
 	cupon_codigo nvarchar(255) NOT NULL,
 	cupon_valor decimal(18,2) ,
 	cupon_fecha_desde date ,
@@ -568,7 +544,7 @@ go
 		constraint FK_Compra_MedioDePago foreign key ( Id_medio_pago) references UBUNTEAM_THE_SQL.MedioDePago(Id);
 
 	
---ConceptoDescuento
+--TipoDescuento
 
 	alter table  UBUNTEAM_THE_SQL.TipoDescuento  
 	add 
@@ -629,313 +605,7 @@ print '**** CONSTRAINTs creadas correctamente ****';
 
 go
 
-/********* Creacion de Funciones *********/
 
---GetCategoria
-
-create function UBUNTEAM_THE_SQL.GetCategoria (
-	@categoria_descripcion nvarchar(255)
-)
-returns int
-as
-begin
-	declare @idCategoria int = (select Categoria.Id from UBUNTEAM_THE_SQL.Categoria  
-									 where Categoria.categoria_descripcion = @categoria_descripcion);
-	return @idCategoria;
-end
-go
-
---GetTipoVariante
-
-create function UBUNTEAM_THE_SQL.GetTipoVariante (
-	@tipo_var_descripcion nvarchar(50)
-)
-returns int
-as
-begin
-	declare @idTipoVariante int = (select TipoVariante.Id from UBUNTEAM_THE_SQL.TipoVariante  
-									 where TipoVariante.tipo_var_descripcion = @tipo_var_descripcion);
-	return @idTipoVariante;
-end
-go
-
--- GetMedioEnvio
-
-create function UBUNTEAM_THE_SQL.GetMedioEnvio (
-	@medio_envio_descripcion nvarchar(50)
-)
-returns int
-as
-begin
-	declare @idMedioEnvio int = (select MedioEnvio.Id from UBUNTEAM_THE_SQL.MedioEnvio
-									 where MedioEnvio.medio_descripcion = @medio_envio_descripcion );
-	return @idMedioEnvio;
-end
-go
-
---GetCanal
-
-create function UBUNTEAM_THE_SQL.GetCanal (
-	@canal_descripcion nvarchar(2255)
-)
-returns int
-as
-begin
-	declare @idCanal int = (select Canal.Id from UBUNTEAM_THE_SQL.Canal
-									 where Canal.canal_descripcion = @canal_descripcion);
-	return @idCanal;
-end
-go
-
-
---GetMedioDePago 
-
-create function UBUNTEAM_THE_SQL.GetMedioDePago (
-	@medio_descripcion nvarchar(255)
-)
-returns int
-as
-begin
-	declare @idMedioDePago int = (select MedioDePago.Id from UBUNTEAM_THE_SQL.MedioDePago
-									 where MedioDePago.medio_descripcion = @medio_descripcion );
-	return @idMedioDePago;
-end
-go
-
---GetProvincia
-create function UBUNTEAM_THE_SQL.GetProvincia (
-	@prov_descripcion nvarchar(255)
-)
-returns int
-as
-begin
-	declare @idProvincia int = (select Provincia.Id from UBUNTEAM_THE_SQL.Provincia
-									 where Provincia.prov_descripcion = @prov_descripcion );
-	return @idProvincia;
-end
-go
-
-
---GetLocalidad
-
-create function UBUNTEAM_THE_SQL.GetLocalidad (
-	@loc_descripcion nvarchar(255),
-	@id_provincia int,
-	@loc_cod_postal_codigo decimal(18,0)
-
-)
-returns int
-as
-begin
-	declare @idLocalidad int = (select Localidad.Id from UBUNTEAM_THE_SQL.Localidad
-									 where Localidad.loc_descripcion = @loc_descripcion 
-									 and Localidad.Id_provincia = @id_provincia and Localidad.loc_cod_postal_codigo = @loc_cod_postal_codigo);
-	return @idLocalidad;
-end
-go
-
-
-create function UBUNTEAM_THE_SQL.GetMedioEnvioPorLocalidad (
-	@id_medio_envio int,
-	@id_localidad int
-	
-
-)
-returns int
-as
-begin
-	declare @idMedioEnvioPorLocalidad int = (select MedioEnvioPorLocalidad.Id from UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad
-									 where MedioEnvioPorLocalidad.Id_medio_envio = @id_medio_envio 
-									 and MedioEnvioPorLocalidad.Id_localidad = @id_localidad );
-	return @idMedioEnvioPorLocalidad;
-end
-go
-
---GetProducto
-
-create function UBUNTEAM_THE_SQL.GetProducto (
-	@prod_codigo nvarchar(50),
-	@prod_descripcion nvarchar(50),
-	@Id_categoria int ,
-	@prod_marca nvarchar(255),
-	@prod_material nvarchar(50),
-	@prod_nombre nvarchar(50)
-)
-returns int
-as
-begin
-	declare @idProducto int = (select  Producto.Id from UBUNTEAM_THE_SQL.Producto  
-									where  Producto.prod_codigo = @prod_codigo and producto.prod_descripcion = @prod_descripcion 
-									and Id_categoria = @Id_categoria
-									and Producto.prod_marca = @prod_marca
-									and Producto.prod_material = @prod_material
-									and Producto.prod_nombre = @prod_nombre);
-	return @idProducto;
-end
-go
-
---GetVariante
-
-create function UBUNTEAM_THE_SQL.GetVariante (
-	@var_codigo nvarchar(50) ,
-	@var_descripcion nvarchar(50),
-	@Id_tipo_variante int 
-)
-returns int
-as
-begin
-	declare @idVariante int = (select  Variante.Id from UBUNTEAM_THE_SQL.Variante 
-									where var_codigo=@var_codigo
-									and var_descripcion = @var_descripcion
-									and Id_tipo_variante =@Id_tipo_variante);
-	return @idVariante;
-end
-go
-
-
-
---GetProductoPorVariante -- nuevo
-
-
-create function UBUNTEAM_THE_SQL.GetProductoPorVariante (
-	@Id_producto nvarchar (50) ,
-	@Id_variante nvarchar (50)
-)
-returns int
-as
-begin
-	declare @idProductoPorVariante int = (select PV.Id from UBUNTEAM_THE_SQL.ProductoPorVariante PV
-									where PV.producto_codigo = @Id_producto and PV.variante_codigo = @Id_variante);
-	return @idProductoPorVariante;
-end
-go
-
-
---GetCliente
-
-create function UBUNTEAM_THE_SQL.GetCliente (
-	@nombre nvarchar(255),
-	@dni decimal(18,0) ,
-	@localidad int ,
-	@telefono char(100) ,
-	@apellido nvarchar(255) ,
-	@fecha_nac date ,
-	@direccion nvarchar(255) ,
-	@mail nvarchar(255) 
-)
-returns int
-as
-begin
-	declare @idCliente int = (select Cliente.Id from UBUNTEAM_THE_SQL.Cliente 
-									where Cliente.clie_nombre = @nombre and clie_dni = @dni
-									and Cliente.Id_localidad = @localidad
-									and clie_telefono = @telefono
-									and clie_apellido = @apellido
-									and clie_fecha_nac = @fecha_nac
-									and clie_direccion = @direccion
-									and clie_mail = @mail );
-	return @idCliente;
-end
-go
-
-
---GetProveedor
-
-create function UBUNTEAM_THE_SQL.GetProveedor (
-	@proveedor_cuit nvarchar(50) ,
-	@proveedor_razon_social nvarchar(50) ,
-	@proveedor_domicilio nvarchar(50) ,
-	@id_localidad int ,
-	@proveedor_mail nvarchar(50) 
-)
-returns int
-as
-begin
-	declare @idProveedor int = (select Proveedor.Id from UBUNTEAM_THE_SQL.Proveedor 
-									where proveedor_cuit = @proveedor_cuit
-									and proveedor_razon_social= @proveedor_razon_social
-									and proveedor_domicilio = @proveedor_domicilio
-									and id_localidad =@id_localidad
-									and proveedor_mail = @proveedor_mail);
-	return @idProveedor;
-end
-go
-
-
---GetCompra
-
-create function UBUNTEAM_THE_SQL.GetCompra (
-	@compra_numero decimal(19,0)
-)
-returns int
-as
-begin
-	declare @idCompra int = (select Compra.Id from UBUNTEAM_THE_SQL.Compra
-									where compra_numero = @compra_numero);
-	return @idCompra;
-end
-go
-
-
-
---GetVenta
-
-create function UBUNTEAM_THE_SQL.GetVenta (
-	@venta_codigo decimal(19,0)
-)
-returns int
-as
-begin
-	
-	declare @idVenta int = (select Venta.Id from UBUNTEAM_THE_SQL.Venta
-									where venta_codigo =@venta_codigo);
-	return @idVenta;
-end
-go
-
-
---GetTipoDescuento
-
-create function UBUNTEAM_THE_SQL.GetTipoDescuento (
-	@concepto_descripcion nvarchar(255)
-)
-returns int
-as
-begin
-	
-	declare @idTipoDescuento int = (select TipoDescuento.Id from UBUNTEAM_THE_SQL.TipoDescuento
-									where concepto_descripcion = @concepto_descripcion );
-	return @idTipoDescuento;
-end
-go
-
-
---GetCupon
-
-create function UBUNTEAM_THE_SQL.GetCupon (
-	@cupon_codigo nvarchar(255) ,
-	@cupon_valor decimal(18,2) ,
-	@cupon_fecha_desde date ,
-	@cupon_fecha_hasta date ,
-	@cupon_tipo nvarchar(50)
-)
-returns int
-as
-begin
-	
-	declare @idCupon int = (select Cupon.Id from UBUNTEAM_THE_SQL.Cupon
-									where cupon_codigo = @cupon_codigo
-									and cupon_valor = @cupon_valor
-									and cupon_fecha_desde = @cupon_fecha_desde
-									and cupon_fecha_hasta = @cupon_fecha_hasta
-									and cupon_tipo = @cupon_tipo);
-	return @idCupon;
-end
-go
-
-
-
-print '**** Funciones creadas correctamente ****';
 
 go
 
@@ -1021,12 +691,21 @@ go
 create procedure UBUNTEAM_THE_SQL.Migrar_MediosDePago
 as
 begin 
-	insert into UBUNTEAM_THE_SQL.MedioDePago(medio_descripcion,medio_costo_transaccion)
+	insert into UBUNTEAM_THE_SQL.MedioDePago(medio_pago_descripcion,medio_costo_transaccion)
+
 	select distinct M.VENTA_MEDIO_PAGO,M.VENTA_MEDIO_PAGO_COSTO
 	from gd_esquema.Maestra as M
-	where M.VENTA_MEDIO_PAGO is not null
+	where M.VENTA_MEDIO_PAGO is not null 
+
+	union
+
+	select distinct M.COMPRA_MEDIO_PAGO,null
+	from gd_esquema.Maestra as M
+	where M.COMPRA_MEDIO_PAGO is not null 
+
 end
 go
+
 
 --Provincia
 
@@ -1057,13 +736,28 @@ begin
 
 	insert into UBUNTEAM_THE_SQL.Localidad(loc_descripcion,Id_provincia,loc_cod_postal_codigo)
 	
-	select distinct M.CLIENTE_LOCALIDAD,UBUNTEAM_THE_SQL.GetProvincia(M.CLIENTE_PROVINCIA),M.CLIENTE_CODIGO_POSTAL
+	select distinct M.CLIENTE_LOCALIDAD,
+	
+	(select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.CLIENTE_PROVINCIA )
+	
+
+	,M.CLIENTE_CODIGO_POSTAL
+
 	from gd_esquema.Maestra as M
-	where M.CLIENTE_LOCALIDAD is not null and M.CLIENTE_PROVINCIA is not null  and M.CLIENTE_CODIGO_POSTAL is not null
+
+	where M.CLIENTE_LOCALIDAD is not null  and M.CLIENTE_CODIGO_POSTAL is not null
+
 	union 
-	select distinct M.PROVEEDOR_LOCALIDAD,UBUNTEAM_THE_SQL.GetProvincia(M.PROVEEDOR_PROVINCIA),M.PROVEEDOR_CODIGO_POSTAL
+
+	select distinct M.PROVEEDOR_LOCALIDAD,
+	
+	(select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.PROVEEDOR_PROVINCIA ),
+	
+	M.PROVEEDOR_CODIGO_POSTAL
+
 	from gd_esquema.Maestra as M
-	where M.PROVEEDOR_LOCALIDAD is not null and M.PROVEEDOR_PROVINCIA is not null  and M.PROVEEDOR_CODIGO_POSTAL is not null
+
+	where M.PROVEEDOR_LOCALIDAD is not null  and M.PROVEEDOR_CODIGO_POSTAL is not null
 end
 go
 
@@ -1075,10 +769,20 @@ as
 begin 
 
 	insert into UBUNTEAM_THE_SQL.Cliente(clie_nombre,clie_dni,Id_localidad,clie_telefono,clie_apellido,clie_fecha_nac,clie_direccion,clie_mail)
-	select distinct M.CLIENTE_NOMBRE,M.CLIENTE_DNI,UBUNTEAM_THE_SQL.GetLocalidad(M.CLIENTE_LOCALIDAD,UBUNTEAM_THE_SQL.GetProvincia(M.CLIENTE_PROVINCIA),M.CLIENTE_CODIGO_POSTAL),M.CLIENTE_TELEFONO,
+	select distinct M.CLIENTE_NOMBRE,
+
+					M.CLIENTE_DNI,
+	
+	(select top 1 Id from UBUNTEAM_THE_SQL.Localidad where loc_cod_postal_codigo = 	M.CLIENTE_CODIGO_POSTAL 
+														   and loc_descripcion = M.CLIENTE_LOCALIDAD  and Id_provincia =  (select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.CLIENTE_PROVINCIA ) ),
+	
+					M.CLIENTE_TELEFONO,
+
 					M.CLIENTE_APELLIDO,M.CLIENTE_FECHA_NAC,M.CLIENTE_DIRECCION,M.CLIENTE_MAIL
+
 	from gd_esquema.Maestra as M
-	where M.CLIENTE_NOMBRE is not null and  M.CLIENTE_LOCALIDAD is not null and M.CLIENTE_PROVINCIA is not null  and M.CLIENTE_CODIGO_POSTAL is not null
+
+	where M.CLIENTE_NOMBRE is not null 
 
 end
 go
@@ -1090,11 +794,16 @@ create procedure UBUNTEAM_THE_SQL.Migrar_MediosDeEnvioPorLocalidad
 as
 begin 
 
-	insert into UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad(Id_localidad,Id_medio_envio)
-	select distinct UBUNTEAM_THE_SQL.GetLocalidad(M.CLIENTE_LOCALIDAD,UBUNTEAM_THE_SQL.GetProvincia(M.CLIENTE_PROVINCIA),M.CLIENTE_CODIGO_POSTAL),
-					UBUNTEAM_THE_SQL.GetMedioEnvio(M.VENTA_MEDIO_ENVIO)
+	insert into UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad(Id_medio_envio,Id_localidad, medio_envio_precio)
+	select distinct  (select top 1 Id from UBUNTEAM_THE_SQL.MedioEnvio where medio_descripcion = M.VENTA_MEDIO_ENVIO ),
+	
+	(select top 1 Id from UBUNTEAM_THE_SQL.Localidad where loc_cod_postal_codigo = 	M.CLIENTE_CODIGO_POSTAL 
+														   and loc_descripcion = M.CLIENTE_LOCALIDAD  and Id_provincia = (select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.CLIENTE_PROVINCIA ) ),
+	M.VENTA_ENVIO_PRECIO
+
 	from gd_esquema.Maestra as M
-	where M.CLIENTE_LOCALIDAD is not null and M.CLIENTE_PROVINCIA is not null and M.CLIENTE_CODIGO_POSTAL is not null and M.VENTA_MEDIO_ENVIO is not null
+
+	where M.VENTA_MEDIO_ENVIO is not null
 
 end
 go
@@ -1110,17 +819,22 @@ begin
 
 	insert into UBUNTEAM_THE_SQL.Venta(venta_codigo,venta_fecha,Id_cliente,venta_total,Id_canal,Id_medio_de_pago,Id_medio_envio_por_localidad,venta_envio_precio, venta_canal_costo,venta_medio_de_pago_costo)
 	select distinct M.VENTA_CODIGO,
-		M.VENTA_FECHA,
-		UBUNTEAM_THE_SQL.GetCliente(M.CLIENTE_NOMBRE,M.CLIENTE_DNI,UBUNTEAM_THE_SQL.GetLocalidad(M.CLIENTE_LOCALIDAD,UBUNTEAM_THE_SQL.GetProvincia(M.CLIENTE_PROVINCIA),M.CLIENTE_CODIGO_POSTAL),M.CLIENTE_TELEFONO,
-					M.CLIENTE_APELLIDO,M.CLIENTE_FECHA_NAC,M.CLIENTE_DIRECCION,M.CLIENTE_MAIL)
+					M.VENTA_FECHA,
+		
+		(select top 1 Id from UBUNTEAM_THE_SQL.Cliente where clie_nombre = M.CLIENTE_NOMBRE )
 
 
-		,M.VENTA_TOTAL,UBUNTEAM_THE_SQL.GetCanal(M.VENTA_CANAL),UBUNTEAM_THE_SQL.GetMedioDePago(M.VENTA_MEDIO_PAGO),
-												UBUNTEAM_THE_SQL.GetMedioEnvioPorLocalidad(UBUNTEAM_THE_SQL.GetMedioEnvio(M.VENTA_MEDIO_ENVIO),UBUNTEAM_THE_SQL.GetLocalidad(M.CLIENTE_LOCALIDAD,UBUNTEAM_THE_SQL.GetProvincia(M.CLIENTE_PROVINCIA),M.CLIENTE_CODIGO_POSTAL)),M.VENTA_ENVIO_PRECIO,M.VENTA_CANAL_COSTO,M.VENTA_MEDIO_PAGO_COSTO
+		,M.VENTA_TOTAL,
+						(select top 1 Id from UBUNTEAM_THE_SQL.Canal where canal_descripcion = VENTA_CANAL ), (select top 1 Id from UBUNTEAM_THE_SQL.MedioDePago where medio_pago_descripcion =M.VENTA_MEDIO_PAGO ),
+
+						(select top 1 Id from UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad  where Id_localidad = (select top 1 Id from UBUNTEAM_THE_SQL.Localidad where loc_cod_postal_codigo = 	M.CLIENTE_CODIGO_POSTAL 
+														   and loc_descripcion = M.CLIENTE_LOCALIDAD  and Id_provincia = (select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.CLIENTE_PROVINCIA ) ) and Id_medio_envio =  (select top 1 Id from UBUNTEAM_THE_SQL.MedioEnvio where medio_descripcion = VENTA_MEDIO_ENVIO ) ) ,
+						
+						M.VENTA_ENVIO_PRECIO,M.VENTA_CANAL_COSTO,M.VENTA_MEDIO_PAGO_COSTO
 	from gd_esquema.Maestra as M
-	where M.VENTA_CODIGO is not null and  M.CLIENTE_LOCALIDAD is not null and M.CLIENTE_PROVINCIA is not null and M.CLIENTE_CODIGO_POSTAL is not null and M.VENTA_MEDIO_ENVIO is not null
-		 and M.VENTA_CANAL is not null and M.PRODUCTO_CODIGO is not null and M.PRODUCTO_VARIANTE_CODIGO is not null 
 
+
+	where M.VENTA_CODIGO is not null  
 end
 go
 
@@ -1134,11 +848,22 @@ create procedure UBUNTEAM_THE_SQL.Migrar_Productos
 as
 begin
 	insert into UBUNTEAM_THE_SQL.Producto(prod_codigo,prod_descripcion,Id_categoria,prod_marca,prod_material,prod_nombre)
-		select distinct  M.PRODUCTO_CODIGO,M.PRODUCTO_DESCRIPCION,UBUNTEAM_THE_SQL.GetCategoria(M.PRODUCTO_CATEGORIA),M.PRODUCTO_MARCA,M.PRODUCTO_MATERIAL,M.PRODUCTO_NOMBRE
+		select distinct  M.PRODUCTO_CODIGO,M.PRODUCTO_DESCRIPCION,
+		
+		(select top 1 Id from UBUNTEAM_THE_SQL.Categoria where categoria_descripcion= PRODUCTO_CATEGORIA ),
+		
+		M.PRODUCTO_MARCA,
+		
+		M.PRODUCTO_MATERIAL,
+		
+		M.PRODUCTO_NOMBRE
+
 		from gd_esquema.Maestra as M
-		where M.PRODUCTO_CATEGORIA is not null and M.PRODUCTO_CODIGO is not null
+
+		where M.PRODUCTO_CODIGO is not null
 end
 go
+
 
 
 --Variante
@@ -1147,9 +872,14 @@ create procedure UBUNTEAM_THE_SQL.Migrar_Variantes
 as
 begin
 	insert into UBUNTEAM_THE_SQL.Variante(var_codigo,var_descripcion,Id_tipo_variante)
-		select distinct M.PRODUCTO_VARIANTE_CODIGO,M.PRODUCTO_VARIANTE,UBUNTEAM_THE_SQL.GetTipoVariante(M.PRODUCTO_TIPO_VARIANTE)
+
+		select distinct M.PRODUCTO_VARIANTE_CODIGO,M.PRODUCTO_VARIANTE,
+		
+		(select top 1 Id from UBUNTEAM_THE_SQL.TipoVariante where tipo_var_descripcion = M.PRODUCTO_TIPO_VARIANTE )
+
 		from gd_esquema.Maestra as M
-		where M.PRODUCTO_TIPO_VARIANTE is not null and M.PRODUCTO_VARIANTE_CODIGO is not null
+
+		where M.PRODUCTO_VARIANTE_CODIGO is not null
 end
 go
 
@@ -1172,10 +902,20 @@ go
 create procedure UBUNTEAM_THE_SQL.Migrar_ProductosPorVariantePorCompra
 as
 begin
-	insert into UBUNTEAM_THE_SQL.ProductoPorVariantePorCompra(Id_prod_var,Id_compra)
-		select distinct UBUNTEAM_THE_SQL.GetProductoPorVariante(M.PRODUCTO_CODIGO, M.PRODUCTO_VARIANTE_CODIGO), UBUNTEAM_THE_SQL.GetCompra(M.COMPRA_NUMERO)
+	insert into UBUNTEAM_THE_SQL.ProductoPorVariantePorCompra(Id_prod_var,Id_compra, precio_compra, prod_var_cantidad_compra)
+		select distinct (select top 1 Id from UBUNTEAM_THE_SQL.ProductoPorVariante where producto_codigo= M.PRODUCTO_CODIGO 
+		
+		and variante_codigo = M.PRODUCTO_VARIANTE_CODIGO ), 
+		
+		(select top 1 Id from UBUNTEAM_THE_SQL.Compra where compra_numero = M.COMPRA_NUMERO ),
+
+		M.COMPRA_PRODUCTO_PRECIO, 
+		M.COMPRA_PRODUCTO_CANTIDAD
+
 		from gd_esquema.Maestra M
+
 		where M.COMPRA_NUMERO is not null and M.PRODUCTO_CODIGO is not null and M.PRODUCTO_VARIANTE_CODIGO is not null
+		
 end
 go
 
@@ -1185,10 +925,19 @@ go
 create procedure UBUNTEAM_THE_SQL.Migrar_ProductosPorVariantePorVenta
 as
 begin
-	insert into UBUNTEAM_THE_SQL.ProductoPorVariantePorVenta(Id_prod_var,Id_venta)
-		select distinct UBUNTEAM_THE_SQL.GetProductoPorVariante(M.PRODUCTO_CODIGO, M.PRODUCTO_VARIANTE_CODIGO), UBUNTEAM_THE_SQL.GetVenta(M.VENTA_CODIGO)
+	insert into UBUNTEAM_THE_SQL.ProductoPorVariantePorVenta(Id_prod_var,Id_venta, precio_venta ,prod_var_cantidad_venta)
+		select distinct (select top 1 Id from UBUNTEAM_THE_SQL.ProductoPorVariante where producto_codigo= M.PRODUCTO_CODIGO 
+		
+		and variante_codigo = M.PRODUCTO_VARIANTE_CODIGO ), 
+
+		(select top 1 Id from UBUNTEAM_THE_SQL.Venta where venta_codigo = M.VENTA_CODIGO ),
+
+		M.VENTA_PRODUCTO_PRECIO, M.VENTA_PRODUCTO_CANTIDAD
+
 		from gd_esquema.Maestra M
+
 		where M.VENTA_CODIGO is not null and M.PRODUCTO_CODIGO is not null and M.PRODUCTO_VARIANTE_CODIGO is not null
+		 
 end
 go
 
@@ -1199,11 +948,20 @@ create procedure UBUNTEAM_THE_SQL.Migrar_Proveedores
 as
 begin
 	insert into UBUNTEAM_THE_SQL.Proveedor(proveedor_cuit, proveedor_razon_social, proveedor_domicilio,id_localidad, proveedor_mail)
-		select distinct M.PROVEEDOR_CUIT, M.PROVEEDOR_RAZON_SOCIAL,M.PROVEEDOR_DOMICILIO,
-		 UBUNTEAM_THE_SQL.GetLocalidad(M.PROVEEDOR_LOCALIDAD,UBUNTEAM_THE_SQL.GetProvincia(M.PROVEEDOR_PROVINCIA),M.PROVEEDOR_CODIGO_POSTAL) PROVEEDOR_LOCALIDAD_ID,
+		select distinct M.PROVEEDOR_CUIT, 
+
+		M.PROVEEDOR_RAZON_SOCIAL,
+
+		M.PROVEEDOR_DOMICILIO,
+	
+	(select top 1 Id from UBUNTEAM_THE_SQL.Localidad where loc_cod_postal_codigo = 	M.PROVEEDOR_CODIGO_POSTAL 
+														   and loc_descripcion = M.PROVEEDOR_LOCALIDAD and Id_provincia = (select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.PROVEEDOR_PROVINCIA )),
+
 		 M.PROVEEDOR_MAIL
+
 		from gd_esquema.Maestra M
-		where M.PROVEEDOR_CUIT is not null and  M.PROVEEDOR_LOCALIDAD is not null and M.PROVEEDOR_PROVINCIA is not null and M.PROVEEDOR_CODIGO_POSTAL is not null
+
+		where M.PROVEEDOR_CUIT is not null 
 end
 go
 
@@ -1211,19 +969,24 @@ go
 --Compra
 
 
-create procedure UBUNTEAM_THE_SQL.Migrar_Compras --nuevo
+create procedure UBUNTEAM_THE_SQL.Migrar_Compras 
  as
  begin 	insert into UBUNTEAM_THE_SQL.Compra(compra_numero, compra_fecha, Id_proveedor, compra_total,Id_medio_pago)
 		select distinct M.compra_numero,
-						M.compra_fecha, UBUNTEAM_THE_SQL.GetProveedor(M.PROVEEDOR_CUIT,M.PROVEEDOR_RAZON_SOCIAL,M.PROVEEDOR_DOMICILIO, 
-						UBUNTEAM_THE_SQL.GetLocalidad(M.PROVEEDOR_LOCALIDAD,UBUNTEAM_THE_SQL.GetProvincia(M.PROVEEDOR_PROVINCIA),M.PROVEEDOR_CODIGO_POSTAL),M.PROVEEDOR_MAIL),
+						M.compra_fecha, 
+
+						(select top 1 Id from UBUNTEAM_THE_SQL.Proveedor where proveedor_cuit = M.PROVEEDOR_CUIT and proveedor_domicilio = M.PROVEEDOR_DOMICILIO
+														and proveedor_mail = M.PROVEEDOR_MAIL and proveedor_razon_social = M.PROVEEDOR_RAZON_SOCIAL 
+														and Id_localidad = (select top 1 Id from UBUNTEAM_THE_SQL.Localidad where loc_cod_postal_codigo = 	M.PROVEEDOR_CODIGO_POSTAL 
+														   and loc_descripcion = M.PROVEEDOR_LOCALIDAD and Id_provincia = (select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.PROVEEDOR_PROVINCIA )   )  ),
+						
 						M.COMPRA_TOTAL,
-						UBUNTEAM_THE_SQL.GetMedioDePago( M.COMPRA_MEDIO_PAGO)
+
+						(select top 1 Id from UBUNTEAM_THE_SQL.MedioDePago where medio_pago_descripcion = M.COMPRA_MEDIO_PAGO  )
 
 		from gd_esquema.Maestra M
 
- 		where M.proveedor_cuit is not null  and M.COMPRA_NUMERO is not null and M.COMPRA_MEDIO_PAGO is not null and M.PRODUCTO_CODIGO is not null 
-		and M.PRODUCTO_VARIANTE_CODIGO is not null and M.PRODUCTO_TIPO_VARIANTE is not null and M.PROVEEDOR_LOCALIDAD is not null and M.PROVEEDOR_PROVINCIA is not null and M.PROVEEDOR_CODIGO_POSTAL is not null
+ 		where M.COMPRA_NUMERO is not null and M.COMPRA_MEDIO_PAGO is not null
 end
 go 
 
@@ -1248,10 +1011,15 @@ go
 create procedure UBUNTEAM_THE_SQL.Migrar_DescuentoPorCompra
  as
  begin 	insert into UBUNTEAM_THE_SQL.DescuentoPorCompra(descuento_compra_codigo, Id_compra,desc_compra_valor)
-		select distinct M.DESCUENTO_COMPRA_CODIGO, UBUNTEAM_THE_SQL.GetCompra( M.COMPRA_NUMERO) ,M.DESCUENTO_COMPRA_VALOR
+		select distinct M.DESCUENTO_COMPRA_CODIGO, 
+		
+		(select top 1 Id from UBUNTEAM_THE_SQL.Compra where compra_numero = M.COMPRA_NUMERO) ,
+		
+		M.DESCUENTO_COMPRA_VALOR
+
 		from gd_esquema.Maestra M
 
- 		where M.DESCUENTO_COMPRA_CODIGO is not null
+ 		where M.DESCUENTO_COMPRA_CODIGO is not null and M.COMPRA_NUMERO is not null
 end
 go 
 
@@ -1263,11 +1031,15 @@ create procedure UBUNTEAM_THE_SQL.Migrar_DescuentoPorVenta
  as
  begin 	insert into UBUNTEAM_THE_SQL.DescuentoPorVenta(Id_venta,desc_venta_importe,Id_tipo_descuento)
 		
-		select distinct UBUNTEAM_THE_SQL.GetVenta(M.VENTA_CODIGO),M.VENTA_DESCUENTO_IMPORTE,UBUNTEAM_THE_SQL.GetTipoDescuento(M.VENTA_DESCUENTO_CONCEPTO)
+		select distinct (select top 1 Id from UBUNTEAM_THE_SQL.Venta where venta_codigo = M.VENTA_CODIGO ),
+
+		M.VENTA_DESCUENTO_IMPORTE,
+		
+		(select top 1 Id from UBUNTEAM_THE_SQL.TipoDescuento where TipoDescuento.concepto_descripcion = M.VENTA_DESCUENTO_CONCEPTO )
 
 		from gd_esquema.Maestra M
 
- 		where M.VENTA_DESCUENTO_IMPORTE is not null
+ 		where M.VENTA_DESCUENTO_IMPORTE is not null 
 
 end
 go 
@@ -1295,9 +1067,12 @@ as
 begin
 	insert into UBUNTEAM_THE_SQL.VentaPorCupon(Id_venta,Id_cupon,venta_cupon_importe)
 		
-		select distinct UBUNTEAM_THE_SQL.GetVenta(M.VENTA_CODIGO), 
-		UBUNTEAM_THE_SQL.GetCupon(M.VENTA_CUPON_CODIGO, M.VENTA_CUPON_VALOR, M.VENTA_CUPON_FECHA_DESDE, 
-						M.VENTA_CUPON_FECHA_HASTA, M.VENTA_CUPON_TIPO),
+		select distinct 
+		
+		(select top 1 Id from UBUNTEAM_THE_SQL.Venta where venta_codigo = M.VENTA_CODIGO ), 
+
+		(select top 1 Id from UBUNTEAM_THE_SQL.Cupon where cupon_codigo  = M.VENTA_CUPON_CODIGO ),
+
 		M.VENTA_CUPON_IMPORTE
 
 		from gd_esquema.Maestra M 
@@ -1314,8 +1089,6 @@ go
 
 /********* Ejecucion de StoredProcedures para migracion *********/
 
-BEGIN TRANSACTION
-BEGIN TRY
 
 --Tablas sin FKs (tienen que ir primero porque el resto de las tablas depende de estas)
 
@@ -1392,13 +1165,6 @@ BEGIN TRY
 	print '**** Migracion de Ventas por Cupon Exitosa****';
 
 
-END TRY
-BEGIN CATCH
-	ROLLBACK TRANSACTION;
-	DECLARE @mensajeError nvarchar(MAX) = 'Error al ejecutar los SPs de migracion de tablas:- ' + ERROR_MESSAGE();
-	THROW 50001, @mensajeError, 1;
-END CATCH
-
 
 
 IF (
@@ -1421,29 +1187,19 @@ IF (
 	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.TipoDescuento)
 	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.TipoVariante)
 	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.VentaPorCupon)
-	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.ProductoPorVariante PV)
+	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.ProductoPorVariante)
 	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Provincia)
 	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Localidad)
 
 	
 )
 
-BEGIN
-	COMMIT TRANSACTION;
+
 	PRINT 'Tablas migradas correctamente.';
-END
-/*
-ELSE
 
-BEGIN
-	ROLLBACK TRANSACTION;
-	THROW 50002, 'Ocurrio un error al migrar las tablas (hay tablas a las que no se le llenaron filas).', 1;
-END
-GO
-*/
+
 
 /*
-
 
 /********* TESTEO *********/
 
