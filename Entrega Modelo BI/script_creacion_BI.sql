@@ -78,6 +78,8 @@ IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Dimension_TipoDescuento')
 IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Dimension_Tiempo')
 	DROP TABLE UBUNTEAM_THE_SQL.Dimension_Tiempo;
 
+IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Hechos_Descuentos')
+	DROP TABLE UBUNTEAM_THE_SQL.Hechos_Descuentos;
 
 /********* Drop de Stored Procedures *********/
 
@@ -137,6 +139,10 @@ go
 
 IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_Tiempo')
 	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Dimension_Tiempo;
+go
+
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Hechos_Descuentos')
+	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Hechos_Descuentos;
 go
 
 
@@ -238,7 +244,7 @@ create table UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorProvincia(
 ); 
 
 
--- Venta
+-- Ventas
 
 create table UBUNTEAM_THE_SQL.Hechos_Ventas(
 	Id int identity ,
@@ -248,7 +254,6 @@ create table UBUNTEAM_THE_SQL.Hechos_Ventas(
 	Id_medio_envio_provincia int NOT NULL,
 	id_tiempo int NOT NULL,
 	id_producto int NOT NULL,
-	id_tipo_descuento int,
 	venta_codigo decimal(19,0) NOT NULL,
 	venta_fecha date ,
 	venta_total decimal(18,2) ,
@@ -257,8 +262,6 @@ create table UBUNTEAM_THE_SQL.Hechos_Ventas(
 	venta_medio_de_pago_costo decimal(18,2),
 	venta_producto_precio decimal(18,2),
 	venta_producto_cantidad decimal(12,2),
-	desc_venta_importe decimal(18,2),
-	desc_venta_cupon_importe decimal(18,2)
 
 	 
 
@@ -320,7 +323,7 @@ create table UBUNTEAM_THE_SQL.Dimension_Categoria(
 
 
 
---Compra
+--Compras
 
 create table UBUNTEAM_THE_SQL.Hechos_Compras(
 	Id int identity ,
@@ -338,6 +341,14 @@ create table UBUNTEAM_THE_SQL.Hechos_Compras(
 );
 
 
+--Descuentos
+
+create table UBUNTEAM_THE_SQL.Hechos_Descuentos(
+	Id_venta int,
+	Id_tipo_descuento int,
+	desc_importe decimal(18,2)
+
+);
 
 --Proveedor
 
@@ -459,7 +470,7 @@ go
 		constraint PK_BI_Tipo_Descuento primary key (Id);
 
 
---Venta
+--Ventas
 
 	alter table  UBUNTEAM_THE_SQL.Hechos_Ventas 
 	add 
@@ -470,9 +481,7 @@ go
 		constraint FK_BI_Venta_MedioDePago foreign key ( Id_medio_de_pago) references UBUNTEAM_THE_SQL.Dimension_MedioDePago(Id),
 		constraint FK_BI_Venta_Medio_Envio_Por_Provincia foreign key ( Id_medio_envio_provincia) references UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorProvincia(Id),
 		constraint FK_BI_Tiempo_Venta foreign key ( id_tiempo) references UBUNTEAM_THE_SQL.Dimension_Tiempo(Id),
-		constraint FK_BI_Producto_Venta foreign key ( id_producto) references UBUNTEAM_THE_SQL.Dimension_Producto(Id),
-		constraint FK_BI_Tipo_Descuento foreign key ( Id_tipo_descuento) references UBUNTEAM_THE_SQL.Dimension_TipoDescuento(id)
-
+		constraint FK_BI_Producto_Venta foreign key ( id_producto) references UBUNTEAM_THE_SQL.Dimension_Producto(Id);
 
 
 --Proveedor
@@ -484,7 +493,7 @@ go
 		constraint FK_BI_Proveedor_Provincia foreign key (Id_provincia) references UBUNTEAM_THE_SQL.Dimension_Provincia(Id);
 
 
---Compra
+--Compras
 
 	alter table  UBUNTEAM_THE_SQL.Hechos_Compras  
 	add 
@@ -495,8 +504,13 @@ go
 		constraint FK_BI_Tiempo_Compra foreign key ( id_tiempo) references UBUNTEAM_THE_SQL.Dimension_Tiempo(Id),
 		constraint FK_BI_Compra_MedioDePago foreign key ( Id_medio_pago) references UBUNTEAM_THE_SQL.Dimension_MedioDePago(Id);
 
+--Descuentos
 
-	
+	alter table  UBUNTEAM_THE_SQL.Hechos_Descuentos
+	add 
+
+		constraint FK_BI_Hechos_Ventas foreign key ( Id_venta) references UBUNTEAM_THE_SQL.Hechos_Ventas,
+		constraint FK_BI_Tipo_Descuento foreign key ( Id_tipo_descuento) references UBUNTEAM_THE_SQL.Dimension_TipoDescuento;
 
 
 
@@ -588,32 +602,57 @@ as
 	select DM.medio_pago_descripcion,
 				 DT.mes,
 				 DTS.concepto_descripcion,
-				 sum(HV.venta_total - HV.venta_medio_de_pago_costo -HV.desc_venta_importe) ingreso_total
+				 sum(HV.venta_total - HV.venta_medio_de_pago_costo -
+				 HD.desc_importe) ingreso_total
 		
 			
 
 	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
 	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on DT.Id = HV.id_tiempo
 	join UBUNTEAM_THE_SQL.Dimension_MedioDePago DM on DM.Id = HV.Id_medio_de_pago
-	join UBUNTEAM_THE_SQL.Dimension_TipoDescuento DTS on DTS.Id = HV.id_tipo_descuento
+	join UBUNTEAM_THE_SQL.Hechos_Descuentos HD on HD.Id_venta = HV.Id
+	join UBUNTEAM_THE_SQL.Dimension_TipoDescuento DTS on DTS.Id = HD.Id_tipo_descuento
 
-
-	where DTS.concepto_descripcion = DM.medio_pago_descripcion and DTS.concepto_descripcion != 'Otros'
+	where DTS.concepto_descripcion = 'Medio de pago'
 	group by  DM.medio_pago_descripcion,DT.mes,DTS.concepto_descripcion
 	
 go
+
+
 
 -- Importe Total Descuentos
 
 create view UBUNTEAM_THE_SQL.v_BI_Importe_Total_Descuentos
 as
-	select V.Id_canal,month(V.venta_fecha) mes,coalesce(sum(V.desc_venta_importe),0) 'Descuentos por Medio de Pago',coalesce(sum(V.desc_venta_cupon_importe),0) 'Descuentos por Cupones' ,
-		/*'Todavia no se' 'Descuentos por Envios Gratis' ,*/
-		coalesce(sum(V.desc_venta_importe),0)+coalesce(sum(V.desc_venta_cupon_importe),0) 'Total Descuentos'
-	from UBUNTEAM_THE_SQL.Dimension_TipoDescuento D
-	join UBUNTEAM_THE_SQL.Hechos_Ventas V on (V.id_tipo_descuento=D.Id)
-	where V.desc_venta_importe is not null or V.desc_venta_cupon_importe is not null
-	group by month(V.venta_fecha),V.Id_canal
+	select HV.Id_canal canal,month(HV.venta_fecha) mes,
+	(select sum(HD2.desc_importe) from UBUNTEAM_THE_SQL.Hechos_Descuentos HD2
+							join UBUNTEAM_THE_SQL.Dimension_TipoDescuento TD2 on TD2.Id =HD2.Id_tipo_descuento
+							join UBUNTEAM_THE_SQL.Hechos_Ventas HV2 on (HD2.Id_venta = HV2.Id)
+
+	where TD2.concepto_descripcion = 'Medio de pago'AND HV2.Id_canal = HV.Id_canal and month(HV2.venta_fecha) = month(HV.venta_fecha)
+	group by HV2.Id_canal,MONTH(HV2.venta_fecha)) 'Descuento por Medio de Pago' 
+	
+	,
+	(select sum(HD3.desc_importe) from UBUNTEAM_THE_SQL.Hechos_Descuentos HD3
+							join UBUNTEAM_THE_SQL.Dimension_TipoDescuento TD3 on TD3.Id =HD3.Id_tipo_descuento
+							join UBUNTEAM_THE_SQL.Hechos_Ventas HV3 on (HD3.Id_venta = HV3.Id)
+
+	where TD3.concepto_descripcion = 'Cupon'AND HV3.Id_canal = HV.Id_canal and month(HV3.venta_fecha) = month(HV.venta_fecha)
+	group by HV3.Id_canal,MONTH(HV3.venta_fecha)) 'Descuento por Cupon' ,
+		
+
+	(select sum(HD4.desc_importe) from UBUNTEAM_THE_SQL.Hechos_Descuentos HD4
+							join UBUNTEAM_THE_SQL.Dimension_TipoDescuento TD4 on TD4.Id =HD4.Id_tipo_descuento
+							join UBUNTEAM_THE_SQL.Hechos_Ventas HV4 on (HD4.Id_venta = HV4.Id)
+
+	where TD4.concepto_descripcion = 'Otros'AND HV4.Id_canal = HV.Id_canal and month(HV4.venta_fecha) = month(HV.venta_fecha)
+	group by HV4.Id_canal,MONTH(HV4.venta_fecha)) 'Descuento Otros'
+
+
+	from UBUNTEAM_THE_SQL.Hechos_Descuentos HD
+	join UBUNTEAM_THE_SQL.Dimension_TipoDescuento TD on TD.Id =HD.Id_tipo_descuento
+	join UBUNTEAM_THE_SQL.Hechos_Ventas HV on (HD.Id_venta = HV.Id)
+	group by month(HV.venta_fecha),HV.Id_canal
 
 
 go
@@ -641,7 +680,7 @@ go
 create view UBUNTEAM_THE_SQL.v_BI_Valor_Promedio_Envio_Por_Provincia
 as
 	
-	select DMP.Id_medio_envio,
+	select DMP.Id_medio_envio medio_envio,
 				DT.anio,
 				DMP.Id_provincia,
 				avg(DMP.medio_envio_precio) as promedio_envio_provincia		
@@ -664,7 +703,7 @@ GO
 create view UBUNTEAM_THE_SQL.v_BI_Aumento_Promedio_De_Precios
 as
 	
-	select PV.Id,
+	select PV.Id proveedor,
 				DT.anio,
 				(max(HC.compra_total)-min(HC.compra_total)/	min(HC.compra_total))aumento_promedio
 
@@ -812,7 +851,7 @@ end
 go
 
 
---Venta
+--Ventas
 
 
 create procedure UBUNTEAM_THE_SQL.Migrar_Hechos_Ventas
@@ -820,8 +859,8 @@ as
 begin 
 
 	insert into UBUNTEAM_THE_SQL.Hechos_Ventas(Id_cliente,Id_canal,Id_medio_de_pago,Id_medio_envio_provincia,
-	id_tiempo,id_producto ,id_tipo_descuento,venta_codigo,venta_fecha,venta_total,venta_envio_precio, venta_canal_costo,venta_medio_de_pago_costo,venta_producto_precio,
-	venta_producto_cantidad,desc_venta_importe,desc_venta_cupon_importe)
+	id_tiempo,id_producto,venta_codigo,venta_fecha,venta_total,venta_envio_precio, venta_canal_costo,venta_medio_de_pago_costo,venta_producto_precio,
+	venta_producto_cantidad)
 
 	select (select C.Id from UBUNTEAM_THE_SQL.Dimension_Cliente C
 										 where V.Id_cliente = C.Id),
@@ -848,12 +887,6 @@ begin
 						join UBUNTEAM_THE_SQL.ProductoPorVariante PPV on PPV.producto_codigo = P.prod_codigo
 						join UBUNTEAM_THE_SQL.ProductoPorVariantePorVenta PV on PV.Id_prod_var=PPV.Id
 				where V.Id = PV.Id_venta),
-		
-		(select top 1 TD.Id from UBUNTEAM_THE_SQL.DescuentoPorVenta DPV
-					  join  UBUNTEAM_THE_SQL.TipoDescuento TD on DPV.Id_tipo_descuento = TD.Id
-					  
-					where DPV.Id_venta = V.Id			   	
-		),
 	
 		V.venta_codigo,V.venta_fecha,V.venta_total,
 
@@ -863,16 +896,49 @@ begin
 																			  where PV2.Id_venta = V.Id),
 
 		(select top 1 PV.prod_var_cantidad_venta from UBUNTEAM_THE_SQL.ProductoPorVariantePorVenta PV
-																			  where PV.Id_venta = V.Id),
-		(select top 1 DV.desc_venta_importe from UBUNTEAM_THE_SQL.DescuentoPorVenta DV
-		where DV.Id_venta = V.Id),
-
-		(select top 1 VC.venta_cupon_importe from UBUNTEAM_THE_SQL.VentaPorCupon VC
-		where VC.Id_cupon = V.Id)
+																			  where PV.Id_venta = V.Id)
 		
 	from UBUNTEAM_THE_SQL.Venta V
 end
 go
+
+
+create procedure UBUNTEAM_THE_SQL.Migrar_Hechos_Descuentos
+as
+begin 
+
+	insert into UBUNTEAM_THE_SQL.Hechos_Descuentos(Id_venta,Id_tipo_descuento,desc_importe)
+	select (select HV.Id  from UBUNTEAM_THE_SQL.Hechos_Ventas HV
+			where HV.Id = V.Id),
+		   (case when TD.concepto_descripcion = 'Efectivo' or TD.concepto_descripcion = 'Transeferencia'
+			then (select DTP.Id from UBUNTEAM_THE_SQL.Dimension_TipoDescuento dtp
+				  where DTP.concepto_descripcion ='Medio de Pago')
+			else (select DTP.Id from UBUNTEAM_THE_SQL.Dimension_TipoDescuento dtp
+				  where DTP.concepto_descripcion ='Otros') end),
+		   DPV.desc_venta_importe
+		
+	from UBUNTEAM_THE_SQL.Venta V
+	join  UBUNTEAM_THE_SQL.DescuentoPorVenta DPV on DPV.Id_venta =V.Id
+	join  UBUNTEAM_THE_SQL.TipoDescuento TD on TD.Id = DPV.Id_tipo_descuento
+
+
+	union
+
+	select (select HV.Id  from UBUNTEAM_THE_SQL.Hechos_Ventas HV
+			where HV.Id = V.Id),
+		   (select DTP.Id from UBUNTEAM_THE_SQL.Dimension_TipoDescuento dtp
+				  where DTP.concepto_descripcion ='Cupon'),
+			VPC.venta_cupon_importe
+		
+	from UBUNTEAM_THE_SQL.Venta V
+	join UBUNTEAM_THE_SQL.VentaPorCupon VPC on VPC.Id_venta = V.Id
+	join UBUNTEAM_THE_SQL.Cupon C on C.Id =VPC.Id_cupon
+
+
+end
+go
+
+
 
 
 --Producto
@@ -935,7 +1001,7 @@ end
 go
 
 
---Compra
+--Compras
 
 
 create procedure UBUNTEAM_THE_SQL.Migrar_Hechos_Compras 
@@ -980,9 +1046,19 @@ create procedure UBUNTEAM_THE_SQL.Migrar_Dimension_TiposDeDescuento
  as
  begin 	insert into UBUNTEAM_THE_SQL.Dimension_TipoDescuento(concepto_descripcion)
 		
-		select TipoDescuento.concepto_descripcion
+		select distinct (case when TipoDescuento.concepto_descripcion = 'Efectivo' or TipoDescuento.concepto_descripcion = 'Transferencia'
+				then 'Medio de pago' else 'Otros' end)
 
 		from UBUNTEAM_THE_SQL.TipoDescuento
+
+
+		union
+
+		select top 1 'Cupon'
+
+		from UBUNTEAM_THE_SQL.TipoDescuento
+
+
 end
 go 
 
@@ -1031,6 +1107,9 @@ go
 	
 	EXECUTE UBUNTEAM_THE_SQL.Migrar_Hechos_Ventas;
 	print '**** Migracion de Hechos_Ventas Exitosa****';
+
+	EXECUTE UBUNTEAM_THE_SQL.Migrar_Hechos_Descuentos;
+	print '**** Migracion de Hechos_Descuentos Exitosa****';
 
 	--Tablas con FKs a tablas que no tienen FKs (van ahora porque ya se migraron las tablas sin FKs, que son de las que dependen estas tablas)
 
