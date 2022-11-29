@@ -535,8 +535,9 @@ as
 		   DT.mes,
 			HV.venta_total,
 			HC.compra_total,
-			DM.medio_costo_transaccion,
-			(HV.venta_total - HC.compra_total - sum(DM.medio_costo_transaccion)) ganancias
+			DM.medio_pago_descripcion,
+			HV.venta_medio_de_pago_costo costo_transaccion_medio_de_pago,
+			(HV.venta_total - HC.compra_total - sum(HV.venta_medio_de_pago_costo)) ganancias
 			
 
 	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
@@ -547,15 +548,12 @@ as
 	join UBUNTEAM_THE_SQL.Dimension_TipoDescuento DTD on DTD.Id = HD.Id_venta
 	join UBUNTEAM_THE_SQL.Hechos_Compras HC on HC.Id_medio_pago =DM.Id
 
-	where DTD.concepto_descripcion = 'Meido de pago'
-
-	group by canal_descripcion,HV.venta_total,HC.compra_total,DM.medio_costo_transaccion,DT.mes
+	
+	group by canal_descripcion,HV.venta_total,HC.compra_total,HV.venta_medio_de_pago_costo,DT.mes,DM.medio_pago_descripcion
 
 
 go
 
-
---select * from UBUNTEAM_THE_SQL.Dimension_MedioDePago
 
 --Productos Con Mayor Rentabilidad
 
