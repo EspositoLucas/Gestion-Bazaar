@@ -699,13 +699,12 @@ begin
 
 	union
 
-	select distinct M.COMPRA_MEDIO_PAGO,null
+	select distinct M.COMPRA_MEDIO_PAGO,0
 	from gd_esquema.Maestra as M
 	where M.COMPRA_MEDIO_PAGO is not null 
 
 end
 go
-
 
 --Provincia
 
@@ -830,7 +829,8 @@ begin
 						(select top 1 Id from UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad  where Id_localidad = (select top 1 Id from UBUNTEAM_THE_SQL.Localidad where loc_cod_postal_codigo = 	M.CLIENTE_CODIGO_POSTAL 
 														   and loc_descripcion = M.CLIENTE_LOCALIDAD  and Id_provincia = (select top 1 Id from UBUNTEAM_THE_SQL.Provincia where prov_descripcion = M.CLIENTE_PROVINCIA ) ) and Id_medio_envio =  (select top 1 Id from UBUNTEAM_THE_SQL.MedioEnvio where medio_descripcion = VENTA_MEDIO_ENVIO ) ) ,
 						
-						M.VENTA_ENVIO_PRECIO,M.VENTA_CANAL_COSTO,M.VENTA_MEDIO_PAGO_COSTO
+						M.VENTA_ENVIO_PRECIO,M.VENTA_CANAL_COSTO,(select MP.medio_costo_transaccion from UBUNTEAM_THE_SQL.MedioDePago MP
+																  where MP.medio_pago_descripcion = M.VENTA_MEDIO_PAGO and MP.medio_costo_transaccion != 0)
 	from gd_esquema.Maestra as M
 
 

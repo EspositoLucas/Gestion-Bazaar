@@ -533,27 +533,20 @@ as
 	
 	select DC.canal_descripcion,
 		   DT.mes,
-			HV.venta_total,
-			HC.compra_total,
-			DM.medio_pago_descripcion,
 			HV.venta_medio_de_pago_costo costo_transaccion_medio_de_pago,
-			(HV.venta_total - HC.compra_total - sum(HV.venta_medio_de_pago_costo)) ganancias
+			sum(HV.venta_total) - sum(HC.compra_total) - sum(HV.venta_medio_de_pago_costo) ganancias
 			
 
 	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
 	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on HV.id_tiempo  = DT.Id
 	join UBUNTEAM_THE_SQL.Dimension_Canal DC on DC.Id = HV.Id_canal 
 	join UBUNTEAM_THE_SQL.Dimension_MedioDePago DM on DM.Id = HV.Id_medio_de_pago
-	join UBUNTEAM_THE_SQL.Hechos_Descuentos HD on HD.Id_venta = HV.Id
-	join UBUNTEAM_THE_SQL.Dimension_TipoDescuento DTD on DTD.Id = HD.Id_venta
 	join UBUNTEAM_THE_SQL.Hechos_Compras HC on HC.Id_medio_pago =DM.Id
 
-	
-	group by canal_descripcion,HV.venta_total,HC.compra_total,HV.venta_medio_de_pago_costo,DT.mes,DM.medio_pago_descripcion
+	group by canal_descripcion,HV.venta_medio_de_pago_costo,DT.mes
 
 
 go
-
 
 --Productos Con Mayor Rentabilidad
 
@@ -609,9 +602,9 @@ create view UBUNTEAM_THE_SQL.v_BI_Ingresos_Por_Medio_De_Pago
 as
 	select DM.medio_pago_descripcion,
 				 DT.mes,
-				 DTS.concepto_descripcion,
-				 sum(HV.venta_total - HV.venta_medio_de_pago_costo -
-				 HD.desc_importe) ingreso_total
+				 sum(HV.venta_total) -  sum(HV.venta_medio_de_pago_costo) -
+				(case when DTS.concepto_descripcion = 'Medio de pago' then  sum(HD.desc_importe)
+				else 0 end) ingreso_total
 		
 			
 
@@ -621,7 +614,6 @@ as
 	join UBUNTEAM_THE_SQL.Hechos_Descuentos HD on HD.Id_venta = HV.Id
 	join UBUNTEAM_THE_SQL.Dimension_TipoDescuento DTS on DTS.Id = HD.Id_tipo_descuento
 
-	where DTS.concepto_descripcion = 'Medio de pago'
 	group by  DM.medio_pago_descripcion,DT.mes,DTS.concepto_descripcion
 	
 go
@@ -632,35 +624,36 @@ go
 
 create view UBUNTEAM_THE_SQL.v_BI_Importe_Total_Descuentos
 as
-	select HV.Id_canal canal,month(HV.venta_fecha) mes,
+	select HV.Id_canal canal,DT.mes mes,
 	(select sum(HD2.desc_importe) from UBUNTEAM_THE_SQL.Hechos_Descuentos HD2
 							join UBUNTEAM_THE_SQL.Dimension_TipoDescuento TD2 on TD2.Id =HD2.Id_tipo_descuento
 							join UBUNTEAM_THE_SQL.Hechos_Ventas HV2 on (HD2.Id_venta = HV2.Id)
-
-	where TD2.concepto_descripcion = 'Medio de pago'AND HV2.Id_canal = HV.Id_canal and month(HV2.venta_fecha) = month(HV.venta_fecha)
-	group by HV2.Id_canal,MONTH(HV2.venta_fecha)) 'Descuento por Medio de Pago' 
+							join UBUNTEAM_THE_SQL.Dimension_Tiempo DT2 on DT2.Id=HV2.id_tiempo
+	where TD2.concepto_descripcion = 'Medio de pago'AND HV2.Id_canal = HV.Id_canal and DT2.mes = DT.mes
+	group by HV2.Id_canal,DT2.mes) 'Descuento por Medio de Pago' 
 	
 	,
 	(select sum(HD3.desc_importe) from UBUNTEAM_THE_SQL.Hechos_Descuentos HD3
 							join UBUNTEAM_THE_SQL.Dimension_TipoDescuento TD3 on TD3.Id =HD3.Id_tipo_descuento
 							join UBUNTEAM_THE_SQL.Hechos_Ventas HV3 on (HD3.Id_venta = HV3.Id)
-
-	where TD3.concepto_descripcion = 'Cupon'AND HV3.Id_canal = HV.Id_canal and month(HV3.venta_fecha) = month(HV.venta_fecha)
-	group by HV3.Id_canal,MONTH(HV3.venta_fecha)) 'Descuento por Cupon' ,
+							join UBUNTEAM_THE_SQL.Dimension_Tiempo DT3 on DT3.Id=HV3.id_tiempo
+	where TD3.concepto_descripcion = 'Cupon'AND HV3.Id_canal = HV.Id_canal and DT3.mes = DT.mes
+	group by HV3.Id_canal,DT3.mes) 'Descuento por Cupon' ,
 		
 
 	(select sum(HD4.desc_importe) from UBUNTEAM_THE_SQL.Hechos_Descuentos HD4
 							join UBUNTEAM_THE_SQL.Dimension_TipoDescuento TD4 on TD4.Id =HD4.Id_tipo_descuento
 							join UBUNTEAM_THE_SQL.Hechos_Ventas HV4 on (HD4.Id_venta = HV4.Id)
-
-	where TD4.concepto_descripcion = 'Otros'AND HV4.Id_canal = HV.Id_canal and month(HV4.venta_fecha) = month(HV.venta_fecha)
-	group by HV4.Id_canal,MONTH(HV4.venta_fecha)) 'Descuento Otros'
+							join UBUNTEAM_THE_SQL.Dimension_Tiempo DT4 on DT4.Id=HV4.id_tiempo
+	where TD4.concepto_descripcion = 'Otros'AND HV4.Id_canal = HV.Id_canal and DT4.mes = DT.mes
+	group by HV4.Id_canal,DT4.mes) 'Descuento Otros'
 
 
 	from UBUNTEAM_THE_SQL.Hechos_Descuentos HD
 	join UBUNTEAM_THE_SQL.Dimension_TipoDescuento TD on TD.Id =HD.Id_tipo_descuento
 	join UBUNTEAM_THE_SQL.Hechos_Ventas HV on (HD.Id_venta = HV.Id)
-	group by month(HV.venta_fecha),HV.Id_canal
+	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on DT.Id=HV.id_tiempo
+	group by DT.mes,HV.Id_canal
 
 
 go
@@ -709,7 +702,8 @@ as
 	
 	select PV.Id proveedor,
 				DT.anio,
-				((max(HC.compra_total)-min(HC.compra_total))/	min(HC.compra_total)) * 100 aumento_promedio
+				((max(HC.compra_producto_precio)-min(HC.compra_producto_precio))
+				/min(HC.compra_producto_precio)) * 100 aumento_promedio
 
 	from UBUNTEAM_THE_SQL.Hechos_Compras HC
 	join UBUNTEAM_THE_SQL.Dimension_Proveedor PV on HC.Id_proveedor = PV.Id
@@ -906,6 +900,7 @@ begin
 end
 go
 
+--select * from UBUNTEAM_THE_SQL.Venta
 
 create procedure UBUNTEAM_THE_SQL.Migrar_Hechos_Descuentos
 as
