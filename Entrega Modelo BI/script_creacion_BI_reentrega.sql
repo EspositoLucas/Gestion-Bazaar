@@ -75,8 +75,8 @@ IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Dimension_Tiempo')
 IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Hechos_Descuentos')
 	DROP TABLE UBUNTEAM_THE_SQL.Hechos_Descuentos;
 
-IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Dimension_Rango_Etario')
-	DROP TABLE UBUNTEAM_THE_SQL.Dimension_Rango_Etario;
+IF EXISTS (SELECT name FROM sys.tables WHERE name = 'Dimension_Rango_Etario_Cliente')
+	DROP TABLE UBUNTEAM_THE_SQL.Dimension_Rango_Etario_Cliente;
 
 PRINT '**** Tablas BI dropeadas correctamente ****';
 
@@ -136,8 +136,8 @@ IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Hechos_Descuento
 	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Hechos_Descuentos;
 go
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_Rango_Etario')
-	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Dimension_Rango_Etario;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'Migrar_Dimension_Rango_Etario_Cliente')
+	DROP PROCEDURE UBUNTEAM_THE_SQL.Migrar_Dimension_Rango_Etario_Cliente;
 go
 
 
@@ -201,9 +201,9 @@ go
 
 --Rango Etario
 
-create table UBUNTEAM_THE_SQL.Dimension_Rango_Etario(
+create table UBUNTEAM_THE_SQL.Dimension_Rango_Etario_Cliente(
 	Id int identity,
-	edad int
+	rango_etario nvarchar(50)
 
 );
 
@@ -320,10 +320,7 @@ create table UBUNTEAM_THE_SQL.Hechos_Descuentos(
 create table UBUNTEAM_THE_SQL.Dimension_Proveedor(
 	Id int identity,
 	proveedor_cuit nvarchar(50) NOT NULL,
-	proveedor_razon_social nvarchar(50) ,
-	proveedor_domicilio nvarchar(50) ,
-	id_provincia int NOT NULL,
-	proveedor_mail nvarchar(50) 
+	proveedor_razon_social nvarchar(50)
 
 );
 
@@ -355,6 +352,11 @@ go
 /********* Creacion de Constraints/PKs/FKs *********/
 
 
+--Rango Etario Cliente
+
+alter table  UBUNTEAM_THE_SQL.Dimension_Rango_Etario_Cliente  
+	add 
+		constraint PK_BI_Rango_Etario_Cliente primary key (Id);
 
 
 --Categoria
@@ -420,7 +422,7 @@ go
 	alter table  UBUNTEAM_THE_SQL.Hechos_Ventas 
 	add 
 		constraint PK_BI_Venta primary key ( Id),
-		constraint FK_BI_Venta_Rango_Etario foreign key ( Id_rango_etario) references UBUNTEAM_THE_SQL.Dimension_Rango_Etario(Id),
+		constraint FK_BI_Venta_Rango_Etario_Cliente foreign key ( Id_rango_etario) references UBUNTEAM_THE_SQL.Dimension_Rango_Etario_Cliente(Id),
 		constraint FK_BI_Venta_Canal foreign key ( Id_canal) references UBUNTEAM_THE_SQL.Dimension_Canal(Id),
 		constraint FK_BI_Venta_MedioDePago foreign key ( Id_medio_de_pago) references UBUNTEAM_THE_SQL.Dimension_MedioDePago(Id),
 		constraint FK_BI_Tiempo_Venta foreign key ( id_tiempo) references UBUNTEAM_THE_SQL.Dimension_Tiempo(Id),
@@ -432,8 +434,7 @@ go
 	alter table  UBUNTEAM_THE_SQL.Dimension_Proveedor  
 	add 
 		constraint PK_BI_Proveedor primary key (Id),
-		constraint UC_BI_proveedor_Cuit unique (proveedor_cuit),
-		constraint FK_BI_Proveedor_Provincia foreign key (Id_provincia) references UBUNTEAM_THE_SQL.Dimension_Provincia(Id);
+		constraint UC_BI_proveedor_Cuit unique (proveedor_cuit);
 
 
 --Compras
@@ -463,7 +464,7 @@ go
 /********* Creacion de Vistas *********/
 
 
-/*
+
 -- Ganancias Mensuales
 
 
@@ -472,8 +473,8 @@ as
 	
 	select DC.canal_descripcion,
 		   DT.mes,
-			HV.venta_medio_de_pago_costo costo_transaccion_medio_de_pago,
-			sum(HV.venta_total) - sum(HC.compra_total) - sum(HV.venta_medio_de_pago_costo) ganancias
+			HV.venta_total_medio_de_pago_costo,
+			sum(HV.venta_total) - sum(HC.compra_total) - HV.venta_total_medio_de_pago_costo ganancias
 			
 
 	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
@@ -482,7 +483,7 @@ as
 	join UBUNTEAM_THE_SQL.Dimension_MedioDePago DM on DM.Id = HV.Id_medio_de_pago
 	join UBUNTEAM_THE_SQL.Hechos_Compras HC on HC.Id_medio_pago =DM.Id
 
-	group by canal_descripcion,HV.venta_medio_de_pago_costo,DT.mes
+	group by canal_descripcion,HV.venta_total_medio_de_pago_costo ,DT.mes
 
 
 go
@@ -513,25 +514,23 @@ go
 
 create view UBUNTEAM_THE_SQL.v_BI_Categorias_Mas_Vendidas
 as
-	
+
 	select top 5 DC.categoria_descripcion,
-				case when DCL.clie_edad < 25 then 'Menor a 25'
-				  when DCL.clie_edad between 25 and 35 then 'Entre 25 y 35' 
-				  when DCL.clie_edad between 35 and 55 then 'Entre 35 y 55'
-				  when DCL.clie_edad > 55 then 'Mayor a 55' end rango_etario,
+				 RC.rango_etario,
 				 DT.mes	,
 				 sum(HV.venta_producto_cantidad) cant_total_vendida	
 
 	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
 
-	join UBUNTEAM_THE_SQL.Dimension_Cliente DCL on DCL.Id = HV.Id_cliente
+	join UBUNTEAM_THE_SQL.Dimension_Rango_Etario_Cliente RC on HV.Id_rango_etario = RC.Id 
 	join UBUNTEAM_THE_SQL.Dimension_Producto DP on  HV.id_producto = DP.Id
 	join UBUNTEAM_THE_SQL.Dimension_Categoria DC on DC.Id = DP.Id_categoria
 	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on DT.Id = HV.id_tiempo
 
 
-	group by  DC.categoria_descripcion,DCL.clie_edad,DT.mes
+	group by  DC.categoria_descripcion,DT.mes,RC.rango_etario
 	order by cant_total_vendida desc
+
 
 go
 
@@ -541,7 +540,7 @@ create view UBUNTEAM_THE_SQL.v_BI_Ingresos_Por_Medio_De_Pago
 as
 	select DM.medio_pago_descripcion,
 				 DT.mes,
-				 sum(HV.venta_total) -  sum(HV.venta_medio_de_pago_costo) -
+				 sum(HV.venta_total) -  HV.venta_total_medio_de_pago_costo -
 				(case when DTS.concepto_descripcion = 'Medio de pago' then  sum(HD.desc_importe)
 				else 0 end) ingreso_total
 		
@@ -553,7 +552,7 @@ as
 	join UBUNTEAM_THE_SQL.Hechos_Descuentos HD on HD.Id_venta = HV.Id
 	join UBUNTEAM_THE_SQL.Dimension_TipoDescuento DTS on DTS.Id = HD.Id_tipo_descuento
 
-	group by  DM.medio_pago_descripcion,DT.mes,DTS.concepto_descripcion
+	group by  DM.medio_pago_descripcion,DT.mes,DTS.concepto_descripcion,HV.venta_total_medio_de_pago_costo
 	
 go
 
@@ -601,17 +600,21 @@ go
 
 create view UBUNTEAM_THE_SQL.v_BI_Porcentaje_Envios_Por_Provincia
 as
-	select distinct month(HV.venta_fecha) as mes, 
+	select distinct DT.mes, 
 					P.prov_descripcion as provincia,
-					format(round(cast(count(HV.Id_medio_envio_provincia) as decimal(7,2)) * 100 / 
-					(select count(HV2.Id_medio_envio_provincia) 
+					DME.medio_descripcion medio_envio,
+					format(round(cast(count(HV.Id_medio_envio) as decimal(7,2)) * 100 / 
+					(select count(HV2.Id_medio_envio) 
 					 from UBUNTEAM_THE_SQL.Hechos_Ventas HV2
-					 where month(HV2.venta_fecha) = month(HV.venta_fecha)
-					 group by month(HV2.venta_fecha)), 2), 'N2') as porcentaje_envios_del_mes
+					 join UBUNTEAM_THE_SQL.Dimension_Tiempo DT2 on DT2.Id=HV2.id_tiempo
+					 where DT2.mes = DT.mes
+					 group by DT2.mes), 2), 'N2') as porcentaje_envios_del_mes
 	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
-	join UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorProvincia MEP on MEP.Id = HV.Id_medio_envio_provincia
-	join UBUNTEAM_THE_SQL.Dimension_Provincia P on MEP.Id_provincia = P.Id
-	group by month(HV.venta_fecha), P.prov_descripcion
+	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on DT.Id=HV.id_tiempo
+	join UBUNTEAM_THE_SQL.Dimension_Provincia P on HV.Id_provincia = P.Id
+	join UBUNTEAM_THE_SQL.Dimension_MedioEnvio DME on DME.Id =HV.Id_medio_envio
+
+	group by DT.mes, P.prov_descripcion,DME.medio_descripcion
 go
 
 -- Valor Promedio Envio por Provincia
@@ -620,16 +623,17 @@ go
 create view UBUNTEAM_THE_SQL.v_BI_Valor_Promedio_Envio_Por_Provincia
 as
 	
-	select DMP.Id_medio_envio medio_envio,
+	select DME.medio_descripcion medio_envio,
 				DT.anio,
-				DMP.Id_provincia,
-				avg(DMP.medio_envio_precio) as promedio_envio_provincia		
+				P.prov_descripcion,
+				avg(HV.venta_total_envio_precio) as promedio_envio_provincia		
 
 	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
-	join UBUNTEAM_THE_SQL.Dimension_MedioEnvioPorProvincia DMP on HV.Id_medio_envio_provincia = DMP.id
 	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on DT.Id = HV.id_tiempo 
+	join UBUNTEAM_THE_SQL.Dimension_Provincia P on HV.Id_provincia = P.Id
+	join UBUNTEAM_THE_SQL.Dimension_MedioEnvio DME on DME.Id =HV.Id_medio_envio
 
-	group by  DMP.Id_medio_envio,DMP.Id_provincia, DT.anio
+	group by  DME.medio_descripcion,P.prov_descripcion, DT.anio
 
 go
 
@@ -640,6 +644,8 @@ create view UBUNTEAM_THE_SQL.v_BI_Aumento_Promedio_De_Precios
 as
 	
 	select PV.Id proveedor,
+		   PV.proveedor_razon_social,
+		   PV.proveedor_cuit,
 				DT.anio,
 				((max(HC.compra_producto_precio)-min(HC.compra_producto_precio))
 				/min(HC.compra_producto_precio)) * 100 aumento_promedio
@@ -648,7 +654,7 @@ as
 	join UBUNTEAM_THE_SQL.Dimension_Proveedor PV on HC.Id_proveedor = PV.Id
 	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on DT.Id = HC.id_tiempo 
 
-	group by  PV.Id, DT.anio
+	group by  PV.Id, DT.anio,PV.proveedor_cuit,PV.proveedor_razon_social
 
 go
 
@@ -667,7 +673,7 @@ as
 	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on DT.Id = HC.id_tiempo 
 
 	group by  P.Id,HC.compra_producto_cantidad,DT.mes
-	order by sum(HC.compra_producto_cantidad) desc
+	order by sum(HC.compra_producto_cantidad),3 desc
 
 go
 
@@ -676,7 +682,7 @@ PRINT '**** Vistas BI creadas correctamente ****';
 
 GO
 
-*/
+
 /********* Creacion de StoredProcedures para migracion *********/
 
 
@@ -746,12 +752,15 @@ go
 
 --Rango Etario
 
-create procedure UBUNTEAM_THE_SQL.Migrar_Dimension_Rango_Etario
+create procedure UBUNTEAM_THE_SQL.Migrar_Dimension_Rango_Etario_Cliente
 as
 begin 
-	insert into UBUNTEAM_THE_SQL.Dimension_Rango_Etario(edad)
+	insert into UBUNTEAM_THE_SQL.Dimension_Rango_Etario_Cliente(rango_etario)
 
-	select (datediff(year,c.clie_fecha_nac,convert(date,getdate())))
+	select distinct (case when (datediff(year,c.clie_fecha_nac,convert(date,getdate()))) < 25
+			 then '<25' when (datediff(year,c.clie_fecha_nac,convert(date,getdate())))between 25 and 35 then '25-35'
+			 when (datediff(year,c.clie_fecha_nac,convert(date,getdate()))) between 35 and 55 then '35-55'
+			 when (datediff(year,c.clie_fecha_nac,convert(date,getdate()))) > 55 then '>55'end )
 	from UBUNTEAM_THE_SQL.Cliente c
 
 end
@@ -768,10 +777,16 @@ begin
 	id_tiempo,id_producto,venta_total,venta_total_envio_precio, venta_total_canal_costo,venta_total_medio_de_pago_costo,venta_producto_precio,
 	venta_producto_cantidad)
 
-	select (select R.Id from UBUNTEAM_THE_SQL.Dimension_Rango_Etario R),
+	select (select R.Id from UBUNTEAM_THE_SQL.Dimension_Rango_Etario_Cliente R
+						join UBUNTEAM_THE_SQL.Cliente C on C.Id =V.Id_cliente
+			where R.rango_etario = (case when (datediff(year,c.clie_fecha_nac,convert(date,getdate()))) < 25
+			 then '<25' when (datediff(year,c.clie_fecha_nac,convert(date,getdate())))between 25 and 35 then '25-35'
+			 when (datediff(year,c.clie_fecha_nac,convert(date,getdate()))) between 35 and 55 then '35-55'
+			 when (datediff(year,c.clie_fecha_nac,convert(date,getdate()))) > 55 then '>55'end )),
 										 
 		(select Id from UBUNTEAM_THE_SQL.Dimension_Canal CA
 		 where CA.Id = V.Id_canal),
+
 		 (select Id from UBUNTEAM_THE_SQL.Dimension_MedioDePago MP
 		 where MP.Id = V.Id_medio_de_pago ),
 		 
@@ -785,7 +800,7 @@ begin
 
 		 (select DP.Id from UBUNTEAM_THE_SQL.Dimension_Provincia DP
 					  join UBUNTEAM_THE_SQL.MedioEnvioPorLocalidad MEP on MEP.Id = V.Id_medio_envio_por_localidad
-					  join Localidad L on L.Id = MEP.Id_localidad
+					  join UBUNTEAM_THE_SQL.Localidad L on L.Id = MEP.Id_localidad
 		  where L.Id_provincia = DP.Id),
 
 		(select top 1 P.Id from UBUNTEAM_THE_SQL.Dimension_Producto P
@@ -804,10 +819,10 @@ begin
 																			  where PV.Id_venta = V.Id)
 		
 	from UBUNTEAM_THE_SQL.Venta V
+	group by V.Id_canal,v.Id_medio_de_pago,V.venta_fecha,V.Id_cliente,V.Id_medio_envio_por_localidad,V.Id,V.venta_total
 end
 go
 
---select * from UBUNTEAM_THE_SQL.Venta
 
 create procedure UBUNTEAM_THE_SQL.Migrar_Hechos_Descuentos
 as
@@ -870,12 +885,8 @@ go
 create procedure UBUNTEAM_THE_SQL.Migrar_Dimension_Proveedores
 as
 begin
-	insert into UBUNTEAM_THE_SQL.Dimension_Proveedor(proveedor_cuit, proveedor_razon_social, proveedor_domicilio,id_provincia, proveedor_mail)
-	select PV.proveedor_cuit,PV.proveedor_razon_social,PV.proveedor_domicilio,
-	(select P.Id from UBUNTEAM_THE_SQL.Localidad L
-	join UBUNTEAM_THE_SQL.Provincia P on P.Id = L.Id_provincia
-	where PV.id_localidad= L.Id	),
-	PV.proveedor_mail
+	insert into UBUNTEAM_THE_SQL.Dimension_Proveedor(proveedor_cuit, proveedor_razon_social)
+	select PV.proveedor_cuit,PV.proveedor_razon_social
 
 
 	from UBUNTEAM_THE_SQL.Proveedor PV
@@ -942,6 +953,7 @@ create procedure UBUNTEAM_THE_SQL.Migrar_Hechos_Compras
 		where DC.Id_compra = C.Id)
 	
  from UBUNTEAM_THE_SQL.Compra C
+ group by C.Id,C.compra_total,C.Id_proveedor,C.Id_medio_pago,C.compra_fecha
 		
 end
 go 
@@ -993,8 +1005,8 @@ go
 	print '**** Migracion de Dimension_Tipos de Descuento Exitosa****';
 	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_Tiempo;
 	print '**** Migracion de Dimension_Tipos de Descuento Exitosa****';
-	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_Rango_Etario;
-	print '**** Migracion de Dimension_Rango_Etario****';
+	EXECUTE UBUNTEAM_THE_SQL.Migrar_Dimension_Rango_Etario_Cliente;
+	print '**** Migracion de Dimension_Rango_Etario_Cliente****';
 
 
 	--Tablas con FKs a tablas que tienen FKs (tener cuidado porque aca s  importa el orden de EXEC de los SPs)
