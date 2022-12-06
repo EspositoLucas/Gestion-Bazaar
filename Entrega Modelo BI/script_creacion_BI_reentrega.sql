@@ -515,11 +515,16 @@ go
 create view UBUNTEAM_THE_SQL.v_BI_Categorias_Mas_Vendidas
 as
 
-	select top 5 DC.categoria_descripcion,
-				 RC.rango_etario,
-				 DT.mes	,
-				 sum(HV.venta_producto_cantidad) cant_total_vendida	
 
+with ordenamiento_rango_mes as (
+	select ROW_NUMBER() over (partition by DT.mes,RC.Id
+
+				 order by DT.mes,sum(HV.venta_producto_cantidad) desc) id_particion,
+
+	DC.categoria_descripcion  nombre_categoria,
+	RC.rango_etario rango_etario,
+	DT.mes mes
+		
 	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
 
 	join UBUNTEAM_THE_SQL.Dimension_Rango_Etario_Cliente RC on HV.Id_rango_etario = RC.Id 
@@ -527,9 +532,10 @@ as
 	join UBUNTEAM_THE_SQL.Dimension_Categoria DC on DC.Id = DP.Id_categoria
 	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on DT.Id = HV.id_tiempo
 
+	group by  DC.categoria_descripcion,DT.mes,RC.rango_etario,RC.Id
 
-	group by  DC.categoria_descripcion,DT.mes,RC.rango_etario
-	order by cant_total_vendida desc
+) select mes,nombre_categoria,rango_etario from ordenamiento_rango_mes 
+  where id_particion <=5
 
 
 go
@@ -663,17 +669,22 @@ go
 
 create view UBUNTEAM_THE_SQL.v_BI_Productos_Con_Mayor_Reposicion
 as
-	
-	select top 3 P.Id,
-				 HC.compra_producto_cantidad,
-				 DT.mes
+with ordenamiento_reposicion as (
+	select ROW_NUMBER() over (partition by DT.mes
 
+				 order by DT.mes,sum(HC.compra_producto_cantidad) desc) Id_particion,
+	P.prod_nombre nombre_prod,
+	HC.compra_producto_cantidad,
+	DT.mes mes
+		
 	from UBUNTEAM_THE_SQL.Hechos_Compras HC
 	join UBUNTEAM_THE_SQL.Dimension_Producto P on HC.id_producto = P.Id
 	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on DT.Id = HC.id_tiempo 
 
-	group by  P.Id,HC.compra_producto_cantidad,DT.mes
-	order by sum(HC.compra_producto_cantidad),3 desc
+	group by  P.Id,HC.compra_producto_cantidad,DT.mes,P.prod_nombre
+
+) select mes,nombre_prod from ordenamiento_reposicion 
+  where id_particion <=3
 
 go
 
