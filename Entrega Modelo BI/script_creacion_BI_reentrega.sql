@@ -537,7 +537,6 @@ with ordenamiento_rango_mes as (
 ) select mes,nombre_categoria,rango_etario from ordenamiento_rango_mes 
   where id_particion <=5
 
-
 go
 
 --Ingresos por Medio de Pago
@@ -561,7 +560,6 @@ as
 	group by  DM.medio_pago_descripcion,DT.mes,DTS.concepto_descripcion,HV.venta_total_medio_de_pago_costo
 	
 go
-
 
 
 -- Importe Total Descuentos
