@@ -504,7 +504,7 @@ as
 
 	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
 	join UBUNTEAM_THE_SQL.Dimension_Producto DP on  HV.id_producto = DP.Id
-	join UBUNTEAM_THE_SQL.Hechos_Compras HC on HC.id_producto = HV.id_producto
+	join UBUNTEAM_THE_SQL.Hechos_Compras HC on HC.id_producto = DP.Id
 	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT1 on DT1.Id = HV.id_tiempo 
 	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT2 on DT2.Id = HC.id_tiempo
 
@@ -556,7 +556,7 @@ as
 	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
 	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on DT.Id = HV.id_tiempo
 	join UBUNTEAM_THE_SQL.Dimension_MedioDePago DM on DM.Id = HV.Id_medio_de_pago
-	join UBUNTEAM_THE_SQL.Hechos_Descuentos HD on HD.Id_venta = HV.Id
+	join UBUNTEAM_THE_SQL.Hechos_Descuentos HD on HD.Id_tiempo = DT.Id
 	join UBUNTEAM_THE_SQL.Dimension_TipoDescuento DTS on DTS.Id = HD.Id_tipo_descuento
 
 	group by  DM.medio_pago_descripcion,DT.mes,DTS.concepto_descripcion,HV.venta_total_medio_de_pago_costo
@@ -990,6 +990,9 @@ go
 
 --Compras
 
+--Version vieja
+
+/*
 
 create procedure UBUNTEAM_THE_SQL.Migrar_Hechos_Compras 
  as
@@ -1028,6 +1031,49 @@ create procedure UBUNTEAM_THE_SQL.Migrar_Hechos_Compras
 		
 end
 go 
+
+*/
+
+
+--Version nueva
+
+
+create procedure UBUNTEAM_THE_SQL.Migrar_Hechos_Compras 
+ as
+ begin 	insert into UBUNTEAM_THE_SQL.Hechos_Compras( Id_proveedor,id_producto ,id_tiempo,Id_medio_pago,
+	compra_total ,compra_producto_precio,compra_producto_cantidad ,desc_compra_valor)
+
+ select DP.Id,
+		
+		DPD.Id,
+		
+		DT.Id,
+		 
+		DMP.Id, 
+	
+
+	  sum(C.compra_total),
+ 
+(select top 1 PC.precio_compra from UBUNTEAM_THE_SQL.ProductoPorVariantePorCompra PC where PC.Id_compra = PPVC.Id),
+ 
+(select top 1 PC2.prod_var_cantidad_compra from UBUNTEAM_THE_SQL.ProductoPorVariantePorCompra PC2 where PC2.Id_compra = PPVC.Id),
+
+(select DC.desc_compra_valor from UBUNTEAM_THE_SQL.DescuentoPorCompra DC
+		where DC.Id_compra = C.Id)
+	
+ from UBUNTEAM_THE_SQL.Compra C
+ join UBUNTEAM_THE_SQL.Dimension_Proveedor DP on C.id_proveedor = DP.Id
+ join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on (DT.anio = year(C.compra_fecha) and DT.mes = month(C.compra_fecha))
+ join UBUNTEAM_THE_SQL.ProductoPorVariantePorCompra PPVC on PPVC.Id_compra = C.Id
+ join UBUNTEAM_THE_SQL.ProductoPorVariante PPV on PPV.Id = PPVC.Id_prod_var
+ join UBUNTEAM_THE_SQL.Dimension_Producto DPD on DPD.prod_codigo = PPV.producto_codigo
+ join UBUNTEAM_THE_SQL.Dimension_MedioDePago DMP on DMP.Id = C.Id_medio_de_pago
+
+ group by C.Id,DP.Id,DPD.Id,DMP.Id,DT.Id
+		
+end
+go 
+
 
 --TipoDescuento
 
