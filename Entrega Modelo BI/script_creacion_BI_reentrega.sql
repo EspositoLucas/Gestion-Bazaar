@@ -474,8 +474,7 @@ as
 	
 	select DC.canal_descripcion,
 		   DT.mes,
-			HV.venta_total_medio_de_pago_costo,
-			sum(HV.venta_total) - sum(HC.compra_total) - HV.venta_total_medio_de_pago_costo ganancias
+			sum(HV.venta_total) - sum(HC.compra_total) - sum(HV.venta_total_medio_de_pago_costo) ganancias
 			
 
 	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
@@ -484,7 +483,7 @@ as
 	join UBUNTEAM_THE_SQL.Dimension_MedioDePago DM on DM.Id = HV.Id_medio_de_pago
 	join UBUNTEAM_THE_SQL.Hechos_Compras HC on HC.Id_medio_pago =DM.Id
 
-	group by canal_descripcion,HV.venta_total_medio_de_pago_costo ,DT.mes
+	group by DC.canal_descripcion,DT.mes
 
 
 go
@@ -821,11 +820,8 @@ begin
 
 	insert into UBUNTEAM_THE_SQL.Hechos_Descuentos(Id_tiempo,Id_tipo_descuento,Id_canal,desc_importe)
 	select DT.Id,
-		   (case when TD.concepto_descripcion = 'Efectivo' or TD.concepto_descripcion = 'Transeferencia'
-			then (select DTP.Id from UBUNTEAM_THE_SQL.Dimension_TipoDescuento DTP
-				  where DTP.concepto_descripcion ='Medio de Pago')
-			else (select DTP.Id from UBUNTEAM_THE_SQL.Dimension_TipoDescuento DTP
-				  where DTP.concepto_descripcion ='Otros') end),
+		   (select DTP.Id from UBUNTEAM_THE_SQL.Dimension_TipoDescuento DTP
+				  where DTP.concepto_descripcion ='Medio de Pago'),
 			DC.Id,
 		   sum(DPV.desc_venta_importe)
 			
@@ -833,10 +829,23 @@ begin
 	join UBUNTEAM_THE_SQL.Dimension_Canal DC on DC.Id = V.Id_canal
 	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on (DT.anio = year(V.venta_fecha) and DT.mes = month(V.venta_fecha))
 	join UBUNTEAM_THE_SQL.DescuentoPorVenta DPV on DPV.Id_venta =V.Id
-	join UBUNTEAM_THE_SQL.TipoDescuento TD on TD.Id = DPV.Id_tipo_descuento
-	join UBUNTEAM_THE_SQL.Dimension_TipoDescuento DTD on DTD.Id = TD.Id
 
-	group by DT.Id, DTD.Id, TD.concepto_descripcion, DC.Id
+	group by DT.Id, DC.Id
+
+	union 
+
+		select DT.Id,
+			(select DTP.Id from UBUNTEAM_THE_SQL.Dimension_TipoDescuento DTP
+				  where DTP.concepto_descripcion ='Otros'),
+			DC.Id,
+		   sum(DPV.desc_venta_importe)
+			
+	from UBUNTEAM_THE_SQL.Venta V
+	join UBUNTEAM_THE_SQL.Dimension_Canal DC on DC.Id = V.Id_canal
+	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on (DT.anio = year(V.venta_fecha) and DT.mes = month(V.venta_fecha))
+	join UBUNTEAM_THE_SQL.DescuentoPorVenta DPV on DPV.Id_venta =V.Id
+
+	group by DT.Id, DC.Id
 
 	union
 
@@ -856,8 +865,6 @@ begin
 
 end
 go
-
-
 
 
 
@@ -938,7 +945,7 @@ create procedure UBUNTEAM_THE_SQL.Migrar_Hechos_Compras
 
 	  sum(PPVC.prod_var_cantidad_compra),
 
-	  sum(PPVC.precio_compra * PVC.prod_var_cantidad_compra) / sum(PPVC.prod_var_cantidad_compra)
+	  sum(PPVC.precio_compra * PPVC.prod_var_cantidad_compra) / sum(PPVC.prod_var_cantidad_compra)
 	
  from UBUNTEAM_THE_SQL.Compra C
  join UBUNTEAM_THE_SQL.Dimension_Proveedor DP on C.id_proveedor = DP.Id
@@ -946,13 +953,12 @@ create procedure UBUNTEAM_THE_SQL.Migrar_Hechos_Compras
  join UBUNTEAM_THE_SQL.ProductoPorVariantePorCompra PPVC on PPVC.Id_compra = C.Id
  join UBUNTEAM_THE_SQL.ProductoPorVariante PPV on PPV.Id = PPVC.Id_prod_var
  join UBUNTEAM_THE_SQL.Dimension_Producto DPD on DPD.prod_codigo = PPV.producto_codigo
- join UBUNTEAM_THE_SQL.Dimension_MedioDePago DMP on DMP.Id = C.Id_medio_de_pago
+ join UBUNTEAM_THE_SQL.Dimension_MedioDePago DMP on DMP.Id = C.Id_medio_pago
 
  group by DP.Id,DPD.Id,DMP.Id,DT.Id
 		
 end
 go 
-
 
 --TipoDescuento
 
@@ -1045,3 +1051,7 @@ IF (
 
 
 	PRINT 'Tablas BI migradas correctamente.';
+
+
+
+select * from UBUNTEAM_THE_SQL.v_BI_Canal_Ventas_Ganancias_Mensuales
