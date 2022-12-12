@@ -232,8 +232,7 @@ create table UBUNTEAM_THE_SQL.Hechos_Ventas(
 	venta_total_canal_costo decimal(18,2) ,
 	venta_total_medio_de_pago_costo decimal(18,2),
 	venta_producto_precio decimal(18,2),
-	venta_producto_cantidad decimal(12,2),
-	cant_envios decimal(18,0)	 
+	venta_producto_cantidad decimal(12,2)
 
 );
 
@@ -595,28 +594,19 @@ go
 
 create view UBUNTEAM_THE_SQL.v_BI_Porcentaje_Envios_Por_Provincia
 as
-	select distinct DT.mes, 
-					DP.prov_descripcion as provincia,
-					
-					/*cast(count(*) * 100 / (select count(*) from UBUNTEAM_THE_SQL.Hechos_Ventas HV2 
-										   where HV2.id_tiempo = DT.Id)as decimal(7,2)) as porcentaje */
 
-					sum(HV.cant_envios) / (select sum(HV2.cant_envios) from UBUNTEAM_THE_SQL.Hechos_Ventas HV2 where HV2.id_tiempo = DT.Id) porcentaje
-					
-					
-					/*
-					cast(count(*) * 100 / (select sum(HV.Id_medio_envio)  from (select count(*) from  UBUNTEAM_THE_SQL.Hechos_Ventas HV2
-																				group by HV2.Id_medio_envio)) as decimal(7,2)) as porcentaje
-																				*/
+	select DT.mes, DP.prov_descripcion, 
+		format((cast(count(*) as decimal(7,2)) * 100 
+		/ (select count(*) from UBUNTEAM_THE_SQL.Hechos_Ventas HV2 
+		where HV2.Id_provincia in (select DP2.Id from UBUNTEAM_THE_SQL.Dimension_Provincia DP2) and HV2.id_tiempo = HV.id_tiempo group by HV2.id_tiempo)), 'N2') as procentaje
 	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
-	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on DT.Id=HV.id_tiempo
-	join UBUNTEAM_THE_SQL.Dimension_Provincia DP on HV.Id_provincia = DP.Id
+	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on DT.Id = HV.id_tiempo
+	join UBUNTEAM_THE_SQL.Dimension_Provincia DP on DP.Id = HV.Id_provincia
 
-	group by DT.mes, DP.prov_descripcion, DT.Id
+	group by DT.mes, HV.id_tiempo, DP.prov_descripcion
+	order by DT.mes
 
 go
-
-select sum(HV2.Id_medio_envio) from UBUNTEAM_THE_SQL.Hechos_Ventas HV2
 
 -- Valor Promedio Envio por Provincia
 
@@ -795,7 +785,7 @@ begin
 
 	insert into UBUNTEAM_THE_SQL.Hechos_Ventas(Id_rango_etario,Id_canal,Id_medio_de_pago,Id_medio_envio,Id_provincia,
 	id_tiempo,id_producto,venta_total,venta_total_envio_precio, venta_total_canal_costo,venta_total_medio_de_pago_costo,venta_producto_precio,
-	venta_producto_cantidad,cant_envios)
+	venta_producto_cantidad)
 
 	select
 
@@ -807,9 +797,7 @@ begin
 
 		sum(PPVV.prod_var_cantidad_venta),
 
-		sum(PPVV.prod_var_cantidad_venta * PPVV.precio_venta)/sum(PPVV.prod_var_cantidad_venta),
-		count(*)
-
+		sum(PPVV.prod_var_cantidad_venta * PPVV.precio_venta)/sum(PPVV.prod_var_cantidad_venta)
 		
 		
 	from UBUNTEAM_THE_SQL.Venta V
