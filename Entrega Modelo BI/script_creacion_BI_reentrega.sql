@@ -604,7 +604,6 @@ as
 	join UBUNTEAM_THE_SQL.Dimension_Provincia DP on DP.Id = HV.Id_provincia
 
 	group by DT.mes, HV.id_tiempo, DP.prov_descripcion
-	order by DT.mes
 
 go
 
