@@ -232,7 +232,8 @@ create table UBUNTEAM_THE_SQL.Hechos_Ventas(
 	venta_total_canal_costo decimal(18,2) ,
 	venta_total_medio_de_pago_costo decimal(18,2),
 	venta_producto_precio decimal(18,2),
-	venta_producto_cantidad decimal(12,2)	 
+	venta_producto_cantidad decimal(12,2),
+	cant_envios decimal(18,0)	 
 
 );
 
@@ -463,7 +464,6 @@ print '**** CONSTRAINTs BI creadas correctamente ****';
 go
 
 
-
 /********* Creacion de Vistas *********/
 
 
@@ -596,16 +596,27 @@ go
 create view UBUNTEAM_THE_SQL.v_BI_Porcentaje_Envios_Por_Provincia
 as
 	select distinct DT.mes, 
-					P.prov_descripcion as provincia,
-					--cast(count(*) * 100 / (select count(*) from UBUNTEAM_THE_SQL.Hechos_Ventas HV2 where HV2.id_tiempo = DT.Id)as decimal(7,2)) as porcentaje
+					DP.prov_descripcion as provincia,
+					
+					/*cast(count(*) * 100 / (select count(*) from UBUNTEAM_THE_SQL.Hechos_Ventas HV2 
+										   where HV2.id_tiempo = DT.Id)as decimal(7,2)) as porcentaje */
+
+					sum(HV.cant_envios) / (select sum(HV2.cant_envios) from UBUNTEAM_THE_SQL.Hechos_Ventas HV2 where HV2.id_tiempo = DT.Id) porcentaje
+					
+					
+					/*
+					cast(count(*) * 100 / (select sum(HV.Id_medio_envio)  from (select count(*) from  UBUNTEAM_THE_SQL.Hechos_Ventas HV2
+																				group by HV2.Id_medio_envio)) as decimal(7,2)) as porcentaje
+																				*/
 	from UBUNTEAM_THE_SQL.Hechos_Ventas HV
 	join UBUNTEAM_THE_SQL.Dimension_Tiempo DT on DT.Id=HV.id_tiempo
-	join UBUNTEAM_THE_SQL.Dimension_Provincia P on HV.Id_provincia = P.Id
+	join UBUNTEAM_THE_SQL.Dimension_Provincia DP on HV.Id_provincia = DP.Id
 
-	group by DT.mes, P.prov_descripcion, DT.Id
+	group by DT.mes, DP.prov_descripcion, DT.Id
 
 go
 
+select sum(HV2.Id_medio_envio) from UBUNTEAM_THE_SQL.Hechos_Ventas HV2
 
 -- Valor Promedio Envio por Provincia
 
@@ -676,6 +687,21 @@ PRINT '**** Vistas BI creadas correctamente ****';
 
 GO
 
+
+--Consulta Views 
+
+/*
+	SELECT  * FROM UBUNTEAM_THE_SQL.v_BI_Canal_Ventas_Ganancias_Mensuales
+	SELECT * FROM UBUNTEAM_THE_SQL.v_BI_Productos_Con_Mayor_Rentabilidad
+	SELECT * FROM UBUNTEAM_THE_SQL.v_BI_Categorias_Mas_Vendidas
+	SELECT * FROM UBUNTEAM_THE_SQL.v_BI_Ingresos_Por_Medio_De_Pago
+	SELECT * FROM UBUNTEAM_THE_SQL.v_BI_Importe_Total_Descuentos
+	SELECT * FROM UBUNTEAM_THE_SQL.v_BI_Porcentaje_Envios_Por_Provincia
+	SELECT * FROM UBUNTEAM_THE_SQL.v_BI_Valor_Promedio_Envio_Por_Provincia
+	SELECT * FROM UBUNTEAM_THE_SQL.v_BI_Aumento_Promedio_De_Precios
+	SELECT * FROM UBUNTEAM_THE_SQL.v_BI_Productos_Con_Mayor_Reposicion
+
+*/
 
 /********* Creacion de StoredProcedures para migracion *********/
 
@@ -769,7 +795,7 @@ begin
 
 	insert into UBUNTEAM_THE_SQL.Hechos_Ventas(Id_rango_etario,Id_canal,Id_medio_de_pago,Id_medio_envio,Id_provincia,
 	id_tiempo,id_producto,venta_total,venta_total_envio_precio, venta_total_canal_costo,venta_total_medio_de_pago_costo,venta_producto_precio,
-	venta_producto_cantidad)
+	venta_producto_cantidad,cant_envios)
 
 	select
 
@@ -781,7 +807,8 @@ begin
 
 		sum(PPVV.prod_var_cantidad_venta),
 
-		sum(PPVV.prod_var_cantidad_venta * PPVV.precio_venta)/sum(PPVV.prod_var_cantidad_venta)
+		sum(PPVV.prod_var_cantidad_venta * PPVV.precio_venta)/sum(PPVV.prod_var_cantidad_venta),
+		count(*)
 
 		
 		
@@ -1023,8 +1050,10 @@ go
 	--Tablas con FKs a tablas que no tienen FKs (van ahora porque ya se migraron las tablas sin FKs, que son de las que dependen estas tablas)
 
 
+--Consulta Procedures 
 
 
+/*
 IF (
 	EXISTS (SELECT  * FROM UBUNTEAM_THE_SQL.Dimension_Canal)
 	and EXISTS (SELECT * FROM UBUNTEAM_THE_SQL.Dimension_Categoria)
@@ -1041,5 +1070,10 @@ IF (
 	
 )
 
+*/
+
 
 	PRINT 'Tablas BI migradas correctamente.';
+
+
+
