@@ -271,8 +271,6 @@ create table UBUNTEAM_THE_SQL.Dimension_Producto(
 	prod_codigo nvarchar(50) NOT NULL,
 	prod_descripcion nvarchar(50) ,
 	Id_categoria int NOT NULL,
-	prod_marca nvarchar(255) ,
-	prod_material nvarchar(50) ,
 	prod_nombre nvarchar(50) 
 
 
@@ -879,10 +877,10 @@ go
 create procedure UBUNTEAM_THE_SQL.Migrar_Dimension_Productos
 as
 begin
-	insert into UBUNTEAM_THE_SQL.Dimension_Producto(prod_codigo,prod_descripcion,Id_categoria,prod_marca,prod_material,prod_nombre)
+	insert into UBUNTEAM_THE_SQL.Dimension_Producto(prod_codigo,prod_descripcion,Id_categoria,prod_nombre)
 	
 	select prod_codigo,prod_descripcion,(select CA.Id from UBUNTEAM_THE_SQL.Dimension_Categoria CA
-										 where P.Id_categoria = CA.Id    ),prod_marca,prod_material,prod_nombre
+										 where P.Id_categoria = CA.Id    ),prod_nombre
 
 	from UBUNTEAM_THE_SQL.Producto P
 end
