@@ -5,7 +5,7 @@ sistema para la gestión de un negocio que vende artículos de Bazar/Regalería 
 
 ## Objetivos:
 
-  .Promover la investigación de técnicas de base de datos
+  .Promover la investigación de técnicas de base de datos utilizando lenguaje SQL/TSQL a tarves del motor de base de datos MS SQL Server 2012
   
   .Aplicar la teoría vista en la asignatura en una aplicación concreta.
   
