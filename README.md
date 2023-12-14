@@ -1,6 +1,6 @@
-# Trabajo Practico Gestion de Datos UTN FRBA 
+# Trabajo Práctico Gestion de Datos UTN FRBA 
 
-Trabajo Pratico de la materia Gestion de Datos donde se intenta simular la implementación de un nuevo
+Trabajo Prático de la materia Gestión de Datos donde se intenta simular la implementación de un nuevo
 sistema para la gestión de un negocio que vende artículos de Bazar/Regalería tanto en local físico como a través de una plataforma online
 
 ## Objetivos:
