@@ -12,3 +12,6 @@ sistema para la gestión de un negocio que vende artículos de Bazar/Regalería 
   .Desarrollar y probar distintos algoritmos sobre datos reales.
   
   .Fomentar la delegación y el trabajo en grupo
+
+---
+UTN-FRBA 2022
