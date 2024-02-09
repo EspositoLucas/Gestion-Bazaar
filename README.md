@@ -1,6 +1,6 @@
 # Trabajo Práctico Gestión de Datos UTN FRBA 2c2022
 
-Trabajo Prático de la materia Gestión de Datos donde se intenta simular la implementación de un nuevo
+[Trabajo Práctico](Documentos/Enunciado.pdf) de la materia Gestión de Datos donde se intenta simular la implementación de un nuevo
 sistema para la gestión de un negocio que vende artículos de Bazar/Regalería tanto en local físico como a través de una plataforma online
 
 ## Objetivos:
